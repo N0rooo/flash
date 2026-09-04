@@ -317,15 +317,42 @@ fn hash_key(path: &Path, size: u64) -> std::io::Result<String> {
 
 // ---------- Nommage ----------
 
+const MOIS_ABREGES: [&str; 12] = [
+    "janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.",
+    "nov.", "déc.",
+];
+
 /// Format choisi par l'utilisateur : dossiers parents, éléments du nom de
-/// fichier (dans l'ordre), mot-clé libre. Si deux fichiers obtiennent le même
-/// nom, le numéro est ajouté d'office (unicité garantie).
+/// fichier (dans l'ordre), mot-clé libre, style d'écriture par élément
+/// (« avril » / « avr » / « 04 »…) et séparateur du nom. Si deux fichiers
+/// obtiennent le même nom, le numéro est ajouté d'office (unicité garantie).
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NameFormat {
     pub elements: Vec<String>,
     #[serde(default = "dossiers_par_defaut")]
     pub dossiers: Vec<String>,
     pub motcle: String,
+    #[serde(default)]
+    pub styles: HashMap<String, String>,
+    #[serde(default = "separateur_par_defaut")]
+    pub separateur: String,
+}
+
+fn separateur_par_defaut() -> String {
+    " ".into()
+}
+
+impl NameFormat {
+    fn style(&self, element: &str, defaut: &'static str) -> &str {
+        self.styles.get(element).map(String::as_str).unwrap_or(defaut)
+    }
+
+    fn separateur_sur(&self) -> &str {
+        match self.separateur.as_str() {
+            "." | "-" | "_" => &self.separateur,
+            _ => " ",
+        }
+    }
 }
 
 fn dossiers_par_defaut() -> Vec<String> {
@@ -338,6 +365,8 @@ impl Default for NameFormat {
             elements: vec!["jour".into(), "mois".into(), "numero".into()],
             dossiers: dossiers_par_defaut(),
             motcle: String::new(),
+            styles: HashMap::new(),
+            separateur: separateur_par_defaut(),
         }
     }
 }
@@ -357,9 +386,20 @@ fn morceau(ts: &NaiveDateTime, element: &str, fmt: &NameFormat, n: usize) -> Opt
                 Some(propre)
             }
         }
-        "jour" => Some(ts.day().to_string()),
-        "mois" => Some(MONTHS_FR[ts.month0() as usize].to_string()),
-        "annee" => Some(ts.year().to_string()),
+        "jour" => Some(match fmt.style("jour", "5") {
+            "05" => format!("{:02}", ts.day()),
+            _ => ts.day().to_string(),
+        }),
+        "mois" => Some(match fmt.style("mois", "avril") {
+            "avr" => MOIS_ABREGES[ts.month0() as usize].to_string(),
+            "04" => format!("{:02}", ts.month()),
+            "4" => ts.month().to_string(),
+            _ => MONTHS_FR[ts.month0() as usize].to_string(),
+        }),
+        "annee" => Some(match fmt.style("annee", "2026") {
+            "26" => format!("{:02}", ts.year().rem_euclid(100)),
+            _ => ts.year().to_string(),
+        }),
         "heure" => Some(format!("{:02}h{:02}", ts.hour(), ts.minute())),
         "numero" => Some(n.to_string()),
         _ => None,
@@ -369,8 +409,20 @@ fn morceau(ts: &NaiveDateTime, element: &str, fmt: &NameFormat, n: usize) -> Opt
 /// Un segment de dossier correspond-il au jeton du format ?
 fn segment_correspond(seg: &str, token: &str, fmt: &NameFormat) -> bool {
     match token {
-        "annee" => seg.len() == 4 && seg.chars().all(|c| c.is_ascii_digit()),
-        "mois" => MONTHS_FR.contains(&seg),
+        "annee" => match fmt.style("annee", "2026") {
+            "26" => seg.len() == 2 && seg.chars().all(|c| c.is_ascii_digit()),
+            _ => seg.len() == 4 && seg.chars().all(|c| c.is_ascii_digit()),
+        },
+        "mois" => match fmt.style("mois", "avril") {
+            "avr" => MOIS_ABREGES.iter().any(|m| m.trim_end_matches('.') == seg),
+            "04" | "4" => {
+                !seg.is_empty()
+                    && seg.len() <= 2
+                    && seg.chars().all(|c| c.is_ascii_digit())
+                    && seg.parse::<u32>().is_ok_and(|v| (1..=12).contains(&v))
+            }
+            _ => MONTHS_FR.contains(&seg),
+        },
         "jour" => !seg.is_empty() && seg.len() <= 2 && seg.chars().all(|c| c.is_ascii_digit()),
         "heure" => seg.len() == 5 && seg.as_bytes().get(2) == Some(&b'h'),
         "motcle" => {
@@ -410,11 +462,15 @@ fn target_rel(
     fmt: &NameFormat,
     force_numero: bool,
 ) -> String {
+    // Un dossier ne finit jamais par un point (« avr. » -> « avr ») : les
+    // dossiers à point final sont interdits sous Windows et pièges partout.
     let mut chemin: Vec<String> = fmt
         .dossiers
         .iter()
         .filter(|d| d.as_str() != "numero")
         .filter_map(|d| morceau(ts, d, fmt, n))
+        .map(|seg| seg.trim_end_matches('.').to_string())
+        .filter(|seg| !seg.is_empty())
         .collect();
     let mut nom: Vec<String> = fmt
         .elements
@@ -428,7 +484,10 @@ fn target_rel(
     if force_numero && !fmt.elements.iter().any(|e| e == "numero") {
         nom.push(n.to_string());
     }
-    chemin.push(format!("{}.{}", nom.join(" "), ext));
+    // Jamais de point final avant l'extension (« 10 avr. » + .jpg -> « 10 avr.jpg »)
+    let nom_joint = nom.join(fmt.separateur_sur());
+    let nom_propre = nom_joint.trim_end_matches(['.', ' ']);
+    chemin.push(format!("{}.{}", nom_propre, ext));
     chemin.join("/")
 }
 

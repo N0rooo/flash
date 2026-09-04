@@ -208,8 +208,21 @@ if (!localStorage.getItem('flashOnboarde')) ouvrirOnboarding()
 
 // -------------------------------------------------------- format des noms
 const LIBELLES = { motcle: 'Mot-clé', jour: 'Jour', mois: 'Mois', annee: 'Année', heure: 'Heure', numero: 'N°' }
+// Un style = un exemple concret. Un clic, rien d'autre à comprendre.
+const STYLES = [
+  { id: 'long', libelle: '10 avril 2026', styles: { jour: '5', mois: 'avril', annee: '2026' }, separateur: ' ' },
+  { id: 'abrege', libelle: '10 avr. 26', styles: { jour: '5', mois: 'avr', annee: '26' }, separateur: ' ' },
+  { id: 'points', libelle: '10.04.26', styles: { jour: '05', mois: '04', annee: '26' }, separateur: '.' },
+  { id: 'tirets', libelle: '10-04-2026', styles: { jour: '05', mois: '04', annee: '2026' }, separateur: '-' },
+]
+const EXEMPLES = {
+  jour: { '5': '10', '05': '10' },
+  mois: { avril: 'avril', avr: 'avr.', '4': '4', '04': '04' },
+  annee: { '2026': '2026', '26': '26' },
+}
 const chipsDossiersEl = document.getElementById('chipsDossiers')
 const chipsNomEl = document.getElementById('chipsNom')
+const chipsStyleEl = document.getElementById('chipsStyle')
 const motcleEl = document.getElementById('motcle')
 const apercuEl = document.getElementById('apercu')
 
@@ -247,27 +260,44 @@ if (!fmt) {
   }
 }
 
+if (!fmt.style) fmt.style = 'long'
+
+function styleActuel() {
+  return STYLES.find(v => v.id === fmt.style) || STYLES[0]
+}
+
 function sauverFormat() {
   localStorage.setItem('flashFormat', JSON.stringify(fmt))
 }
 
 function formatCourant() {
+  const v = styleActuel()
   return {
     elements: fmt.ordre.filter(c => c.actif).map(c => c.id),
     dossiers: fmt.dossiers.filter(c => c.actif).map(c => c.id),
     motcle: fmt.motcle || '',
+    styles: v.styles,
+    separateur: v.separateur,
   }
 }
 
 function apercu() {
+  const v = styleActuel()
   const exemple = {
     motcle: (fmt.motcle || 'vacances').trim() || 'vacances',
-    jour: '10', mois: 'avril', annee: '2026', heure: '14h32', numero: '2',
+    jour: EXEMPLES.jour[v.styles.jour],
+    mois: EXEMPLES.mois[v.styles.mois],
+    annee: EXEMPLES.annee[v.styles.annee],
+    heure: '14h32',
+    numero: '2',
   }
-  const chemin = fmt.dossiers.filter(c => c.actif).map(c => exemple[c.id])
+  const chemin = fmt.dossiers
+    .filter(c => c.actif)
+    .map(c => (exemple[c.id] || '').replace(/\.$/, ''))
   let nom = fmt.ordre.filter(c => c.actif).map(c => exemple[c.id])
-  if (nom.length === 0) nom = ['10', 'avril']
-  apercuEl.textContent = (chemin.length ? chemin.join('/') + '/' : '') + nom.join(' ') + '.jpg'
+  if (nom.length === 0) nom = [exemple.jour, exemple.mois]
+  const nomJoint = nom.join(v.separateur).replace(/[. ]+$/, '')
+  apercuEl.textContent = (chemin.length ? chemin.join('/') + '/' : '') + nomJoint + '.jpg'
 }
 
 // Glisser maison : dragDropEnabled de Tauri intercepte le drag HTML5,
@@ -275,9 +305,25 @@ function apercu() {
 let glisse = null
 let vientDeGlisser = false
 
+function dessinerStyles() {
+  chipsStyleEl.innerHTML = ''
+  for (const v of STYLES) {
+    const el = document.createElement('span')
+    el.className = 'chip' + (fmt.style === v.id ? '' : ' coupe')
+    el.textContent = v.libelle
+    el.addEventListener('click', () => {
+      fmt.style = v.id
+      sauverFormat()
+      toutDessiner()
+    })
+    chipsStyleEl.appendChild(el)
+  }
+}
+
 function toutDessiner() {
   dessinerBarre(chipsDossiersEl, fmt.dossiers)
   dessinerBarre(chipsNomEl, fmt.ordre)
+  dessinerStyles()
   motcleEl.hidden = !(
     fmt.dossiers.some(c => c.id === 'motcle' && c.actif) ||
     fmt.ordre.some(c => c.id === 'motcle' && c.actif)
