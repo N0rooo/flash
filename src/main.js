@@ -86,6 +86,7 @@ async function runImport(paths) {
       sources: paths,
       dest,
       moveFiles: moveToggle.checked,
+      format: formatCourant(),
     })
     const parts = [`${s.imported} fichier${s.imported > 1 ? 's' : ''} rapporté${s.imported > 1 ? 's' : ''}`]
     if (s.duplicates) parts.push(`${s.duplicates} doublon${s.duplicates > 1 ? 's' : ''} ignoré${s.duplicates > 1 ? 's' : ''}`)
@@ -190,3 +191,89 @@ document.getElementById('chooseDestOnb').addEventListener('click', async () => {
 })
 
 if (!localStorage.getItem('flashOnboarde')) ouvrirOnboarding()
+
+
+// -------------------------------------------------------- format des noms
+const LIBELLES = { motcle: 'Mot-clé', jour: 'Jour', mois: 'Mois', annee: 'Année', heure: 'Heure', numero: 'N°' }
+const chipsEl = document.getElementById('chips')
+const motcleEl = document.getElementById('motcle')
+const apercuEl = document.getElementById('apercu')
+
+let fmt
+try {
+  fmt = JSON.parse(localStorage.getItem('flashFormat'))
+} catch { /* format illisible : on repart du défaut */ }
+if (!fmt || !Array.isArray(fmt.ordre)) {
+  fmt = {
+    ordre: [
+      { id: 'motcle', actif: false },
+      { id: 'jour', actif: true },
+      { id: 'mois', actif: true },
+      { id: 'annee', actif: false },
+      { id: 'heure', actif: false },
+      { id: 'numero', actif: true },
+    ],
+    motcle: '',
+  }
+}
+
+function sauverFormat() {
+  localStorage.setItem('flashFormat', JSON.stringify(fmt))
+}
+
+function formatCourant() {
+  return {
+    elements: fmt.ordre.filter(c => c.actif).map(c => c.id),
+    motcle: fmt.motcle || '',
+  }
+}
+
+function apercu() {
+  const exemple = { motcle: (fmt.motcle || 'vacances').trim() || 'vacances', jour: '10', mois: 'avril', annee: '2026', heure: '14h32', numero: '2' }
+  let parts = fmt.ordre.filter(c => c.actif).map(c => exemple[c.id])
+  if (!fmt.ordre.find(c => c.id === 'numero' && c.actif)) parts.push(exemple.numero)
+  if (parts.length === 0) parts = ['10', 'avril', '2']
+  apercuEl.textContent = '2026/avril/' + parts.join(' ') + '.jpg'
+}
+
+let glisse = null
+
+function dessinerChips() {
+  chipsEl.innerHTML = ''
+  fmt.ordre.forEach((c, i) => {
+    const el = document.createElement('span')
+    el.className = 'chip' + (c.actif ? '' : ' coupe') + (c.id === 'numero' ? ' fixe' : '')
+    el.textContent = LIBELLES[c.id]
+    el.draggable = true
+    if (c.id === 'numero') el.title = 'Toujours présent : deux photos du même jour doivent avoir des noms différents'
+    el.addEventListener('click', () => {
+      if (c.id === 'numero') return
+      c.actif = !c.actif
+      if (c.id === 'motcle') motcleEl.hidden = !c.actif
+      sauverFormat(); dessinerChips(); apercu()
+    })
+    el.addEventListener('dragstart', () => { glisse = i })
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('survole') })
+    el.addEventListener('dragleave', () => el.classList.remove('survole'))
+    el.addEventListener('drop', e => {
+      e.preventDefault()
+      el.classList.remove('survole')
+      if (glisse === null || glisse === i) return
+      const [pris] = fmt.ordre.splice(glisse, 1)
+      fmt.ordre.splice(i, 0, pris)
+      glisse = null
+      sauverFormat(); dessinerChips(); apercu()
+    })
+    chipsEl.appendChild(el)
+  })
+}
+
+motcleEl.value = fmt.motcle || ''
+motcleEl.hidden = !fmt.ordre.find(c => c.id === 'motcle' && c.actif)
+motcleEl.addEventListener('input', () => {
+  fmt.motcle = motcleEl.value
+  sauverFormat(); apercu()
+})
+
+dessinerChips()
+apercu()

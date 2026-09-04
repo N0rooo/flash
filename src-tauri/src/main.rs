@@ -30,9 +30,11 @@ async fn import(
     sources: Vec<String>,
     dest: String,
     move_files: bool,
+    format: Option<organizer::NameFormat>,
 ) -> Result<organizer::Summary, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        organizer::organize(&sources, &dest, move_files, |p| {
+        let fmt = format.unwrap_or_default();
+        organizer::organize(&sources, &dest, move_files, &fmt, |p| {
             let _ = app.emit("progress", p);
         })
     })

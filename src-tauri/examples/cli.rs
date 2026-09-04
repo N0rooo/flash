@@ -1,5 +1,5 @@
 // Classement en ligne de commande : cargo run --example cli -- <source>... <destination>
-use tri_photos::organizer::organize;
+use flash::organizer::{organize, NameFormat};
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -8,7 +8,7 @@ fn main() {
         std::process::exit(1);
     }
     let (sources, dest) = args.split_at(args.len() - 1);
-    match organize(sources, &dest[0], false, |p| {
+    match organize(sources, &dest[0], false, &NameFormat::default(), |p| {
         if p.phase == "apply" && p.done % 25 == 0 {
             eprintln!("  {}/{}", p.done, p.total);
         }

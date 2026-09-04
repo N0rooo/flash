@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Local, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Datelike, Local, NaiveDateTime, TimeZone, Utc, Timelike};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
@@ -317,17 +317,59 @@ fn hash_key(path: &Path, size: u64) -> std::io::Result<String> {
 
 // ---------- Nommage ----------
 
-fn target_rel(ts: &NaiveDateTime, n: usize, ext: &str) -> String {
+/// Format de nom choisi par l'utilisateur : ordre des éléments et mot-clé
+/// libre. Le numéro est toujours garanti (unicité dans la journée) ; les
+/// dossiers restent Année/mois quoi qu'il arrive.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct NameFormat {
+    pub elements: Vec<String>,
+    pub motcle: String,
+}
+
+impl Default for NameFormat {
+    fn default() -> Self {
+        NameFormat {
+            elements: vec!["jour".into(), "mois".into(), "numero".into()],
+            motcle: String::new(),
+        }
+    }
+}
+
+fn target_rel(ts: &NaiveDateTime, n: usize, ext: &str, fmt: &NameFormat) -> String {
     let month = MONTHS_FR[ts.month0() as usize];
-    format!(
-        "{}/{}/{} {} {}.{}",
-        ts.year(),
-        month,
-        ts.day(),
-        month,
-        n,
-        ext
-    )
+    let mut parts: Vec<String> = Vec::new();
+    let mut numero_place = false;
+    for element in &fmt.elements {
+        match element.as_str() {
+            "motcle" => {
+                let propre: String = fmt
+                    .motcle
+                    .trim()
+                    .chars()
+                    .filter(|c| *c != '/' && *c != ':' && !c.is_control())
+                    .collect();
+                if !propre.is_empty() {
+                    parts.push(propre);
+                }
+            }
+            "jour" => parts.push(ts.day().to_string()),
+            "mois" => parts.push(month.to_string()),
+            "annee" => parts.push(ts.year().to_string()),
+            "heure" => parts.push(format!("{:02}h{:02}", ts.hour(), ts.minute())),
+            "numero" => {
+                parts.push(n.to_string());
+                numero_place = true;
+            }
+            _ => {}
+        }
+    }
+    if parts.is_empty() {
+        parts = vec![ts.day().to_string(), month.to_string()];
+    }
+    if !numero_place {
+        parts.push(n.to_string());
+    }
+    format!("{}/{}/{}.{}", ts.year(), month, parts.join(" "), ext)
 }
 
 // ---------- Index ----------
@@ -493,6 +535,7 @@ pub fn organize<F: Fn(Progress) + Sync>(
     sources: &[String],
     dest: &str,
     move_files: bool,
+    fmt: &NameFormat,
     progress: F,
 ) -> Result<Summary, String> {
     let dest = PathBuf::from(dest);
@@ -665,7 +708,7 @@ pub fn organize<F: Fn(Progress) + Sync>(
             let n = i + 1;
             match item {
                 Item::Existing { rel, rec, ext } => {
-                    let to = target_rel(&rec.ts, n, &ext);
+                    let to = target_rel(&rec.ts, n, &ext, fmt);
                     if rel != to {
                         renames.push(RenamePlan {
                             from: rel,
@@ -675,7 +718,7 @@ pub fn organize<F: Fn(Progress) + Sync>(
                     final_index.insert(to, rec);
                 }
                 Item::New(e) => {
-                    let to = target_rel(&e.ts, n, &e.ext);
+                    let to = target_rel(&e.ts, n, &e.ext, fmt);
                     let original = e
                         .src
                         .file_name()
@@ -946,6 +989,7 @@ mod tests {
             &[vrac.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
@@ -957,6 +1001,7 @@ mod tests {
             &[vrac.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
@@ -968,6 +1013,7 @@ mod tests {
             &[dest.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
@@ -1031,6 +1077,7 @@ mod tests {
             &[src1.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
@@ -1043,6 +1090,7 @@ mod tests {
             &[src1.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
@@ -1057,6 +1105,7 @@ mod tests {
             &[src2.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
@@ -1086,6 +1135,7 @@ mod tests {
             &[src.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
@@ -1111,6 +1161,7 @@ mod tests {
             &[src1.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
@@ -1127,6 +1178,7 @@ mod tests {
             &[src2.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
@@ -1154,6 +1206,7 @@ mod tests {
             &[src3.to_string_lossy().into_owned()],
             dest.to_str().unwrap(),
             false,
+            &NameFormat::default(),
             |_| {},
         )
         .unwrap();
