@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="nuit" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262a34"/>
+      <stop offset="1" stop-color="#15161c"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#f7c948" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#f7c948" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="poil" cx="0.42" cy="0.32" r="0.9">
+      <stop offset="0" stop-color="#f9efdb"/>
+      <stop offset="1" stop-color="#e7d2ab"/>
+    </radialGradient>
+    <linearGradient id="oreille" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a3c2c"/>
+      <stop offset="1" stop-color="#6b563a"/>
+    </linearGradient>
+    <clipPath id="cadre">
+      <rect x="20" y="20" width="984" height="984" rx="224"/>
+    </clipPath>
+  </defs>
+
+  <rect x="20" y="20" width="984" height="984" rx="224" fill="url(#nuit)"/>
+
+  <g clip-path="url(#cadre)">
+    <rect x="20" y="20" width="984" height="984" fill="url(#halo)"/>
+
+    <!-- oreilles dressées, chien aux aguets -->
+    <path d="M 290 470 C 240 330 250 190 300 90 C 400 150 470 260 490 380 C 420 400 340 435 290 470 Z" fill="url(#oreille)"/>
+    <path d="M 734 470 C 784 330 774 190 724 90 C 624 150 554 260 534 380 C 604 400 684 435 734 470 Z" fill="url(#oreille)"/>
+    <path d="M 320 420 C 292 320 296 230 326 156 C 392 208 436 288 452 372 C 404 386 354 402 320 420 Z" fill="#f7c948" opacity="0.9"/>
+
+    <!-- tête ronde et grande -->
+    <circle cx="512" cy="590" r="340" fill="url(#poil)"/>
+
+    <!-- tache éclair sur l'œil gauche -->
+    <path d="M 470 330 L 330 520 L 415 520 L 360 690 L 520 480 L 435 480 Z" fill="#f7c948"/>
+
+    <!-- museau -->
+    <ellipse cx="512" cy="740" rx="210" ry="150" fill="#fdf7e8"/>
+
+    <!-- truffe -->
+    <path d="M 512 715 C 482 709 458 691 458 667 C 458 641 482 628 512 628 C 542 628 566 641 566 667 C 566 691 542 709 512 715 Z" fill="#2b2620"/>
+
+    <!-- grand sourire et langue : chien content d'avoir rapporté -->
+    <path d="M 512 718 C 512 762 478 788 440 786" fill="none" stroke="#2b2620" stroke-width="20" stroke-linecap="round"/>
+    <path d="M 512 718 C 512 762 546 788 584 786" fill="none" stroke="#2b2620" stroke-width="20" stroke-linecap="round"/>
+    <path d="M 512 770 C 490 815 500 852 528 862 C 558 852 566 812 548 768 Z" fill="#e2574d"/>
+
+    <!-- œil dans la tache, œil droit pétillant -->
+    <circle cx="415" cy="505" r="34" fill="#2b2620"/>
+    <circle cx="427" cy="493" r="11" fill="#fdf7e8"/>
+    <circle cx="640" cy="505" r="34" fill="#2b2620"/>
+    <circle cx="652" cy="493" r="11" fill="#fdf7e8"/>
+
+    <rect x="20" y="20" width="984" height="984" fill="none"/>
+  </g>
+</svg>

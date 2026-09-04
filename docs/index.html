@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flash, le chien qui rapporte tes photos dans l'ordre</title>
+  <meta name="description" content="Glisse tes dossiers de photos : Flash lit la vraie date de prise de vue et classe tout en Année/mois/jour, doublons ignorés, originaux intacts. App Mac gratuite.">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta property="og:title" content="Flash, le chien qui rapporte tes photos dans l'ordre">
+  <meta property="og:description" content="Des années de photos en vrac, remises dans l'ordre.">
+  <meta property="og:image" content="https://n0rooo.github.io/flash/flash.svg">
+  <style>
+    :root {
+      --nuit: #1c1e24;
+      --panneau: #24272f;
+      --creme: #f0ead8;
+      --sourdine: #9aa0ab;
+      --eclair: #f7c948;
+      --eclair-vif: #ffd869;
+      --trait: #343845;
+      --titre: 'Avenir Next Condensed', 'Avenir Next', 'Arial Narrow', sans-serif;
+      --texte: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    ::selection { background: var(--eclair); color: #1c1600; }
+    body {
+      margin: 0; font-family: var(--texte); font-size: 16px;
+      color: var(--creme); background: var(--nuit);
+      -webkit-font-smoothing: antialiased; line-height: 1.55;
+      overflow-x: clip;
+    }
+    .pellicule {
+      height: 22px; background: #0b0c10;
+      background-image: repeating-linear-gradient(90deg,
+        transparent 0 9px, #e9e2d2 9px 21px, transparent 21px 30px);
+      background-size: 30px 9px; background-repeat: repeat-x; background-position: 0 center;
+    }
+    .contenu { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+    header.site { display: flex; align-items: center; gap: 12px; padding: 20px 0; }
+    header.site img { width: 40px; height: 40px; border-radius: 12px; }
+    header.site .nom {
+      font-family: var(--titre); font-size: 26px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.03em; color: var(--eclair);
+    }
+    header.site nav { margin-left: auto; display: flex; gap: 18px; }
+    header.site a { color: var(--sourdine); text-decoration: none; font-size: 14.5px; font-weight: 600; }
+    header.site a:hover { color: var(--eclair); }
+
+    .heros { text-align: center; padding: 56px 0 30px; position: relative; }
+    .heros::before {
+      content: ''; position: absolute; inset: -80px 0 0;
+      background: radial-gradient(560px 320px at 50% 10%, rgba(247, 201, 72, 0.14), transparent 70%);
+      pointer-events: none;
+    }
+    .heros img.mascotte { width: 148px; height: 148px; border-radius: 34px; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55); position: relative; }
+    .heros h1 {
+      font-family: var(--titre); font-size: clamp(38px, 7vw, 64px); font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.01em;
+      margin: 26px 0 14px; line-height: 1.05; position: relative;
+    }
+    .heros h1 .jaune { color: var(--eclair); }
+    .heros .sous { color: var(--sourdine); font-size: 18px; max-width: 620px; margin: 0 auto 30px; position: relative; }
+    .cta { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; position: relative; }
+    .bouton {
+      display: inline-block; text-decoration: none; font-weight: 700;
+      border-radius: 12px; padding: 15px 30px; font-size: 17px;
+      background: var(--eclair); color: #1c1600;
+      box-shadow: 0 12px 32px rgba(247, 201, 72, 0.3);
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+    .bouton:hover { transform: translateY(-2px); background: var(--eclair-vif); }
+    .precision { color: var(--sourdine); font-size: 13px; margin-top: 14px; font-family: var(--mono); position: relative; }
+
+    /* maquette de l'app */
+    .demo {
+      max-width: 620px; margin: 44px auto 0; text-align: left; position: relative;
+      background: var(--panneau); border: 1px solid var(--trait); border-radius: 18px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5); overflow: hidden;
+      transform: rotate(-0.6deg);
+    }
+    .demo .barre { display: flex; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--trait); }
+    .demo .rond { width: 11px; height: 11px; border-radius: 50%; }
+    .demo .corps { padding: 18px 20px 22px; }
+    .demo .zone {
+      border: 2px dashed rgba(247, 201, 72, 0.55); border-radius: 14px;
+      text-align: center; padding: 26px 16px; margin-bottom: 16px;
+      background: rgba(247, 201, 72, 0.05);
+    }
+    .demo .zone .gros { font-family: var(--titre); font-size: 19px; font-weight: 700; }
+    .demo .zone .petit { color: var(--sourdine); font-size: 12.5px; margin-top: 4px; }
+    .demo .jauge { height: 8px; background: var(--nuit); border: 1px solid var(--trait); border-radius: 999px; overflow: hidden; }
+    .demo .jauge div { width: 66%; height: 100%; background: var(--eclair); border-radius: 999px; }
+    .demo .etat { color: var(--sourdine); font-size: 13px; margin-top: 8px; font-family: var(--mono); }
+
+    .punch {
+      text-align: center; padding: 34px 26px; font-family: var(--titre);
+      font-size: clamp(24px, 3.6vw, 34px); font-weight: 800; text-transform: uppercase;
+      max-width: 640px; margin: 56px auto 8px;
+      background: var(--panneau); border: 1px solid var(--trait); border-radius: 18px;
+      transform: rotate(0.5deg);
+    }
+    .punch .jaune { color: var(--eclair); }
+
+    .tete-section { text-align: center; margin-top: 60px; }
+    .surtitre {
+      display: inline-block; font-family: var(--mono); font-size: 12px;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--eclair);
+      border: 1.5px dashed var(--eclair); border-radius: 999px; padding: 6px 16px;
+    }
+    .grille {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px; padding: 26px 0 10px;
+    }
+    .carte {
+      background: var(--panneau); border: 1px solid var(--trait); border-radius: 18px;
+      padding: 24px 22px; transition: transform 0.16s ease, border-color 0.16s ease;
+    }
+    .carte:hover { transform: translateY(-4px); border-color: rgba(247, 201, 72, 0.5); }
+    .carte h3 { font-family: var(--titre); font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+    .carte p { color: var(--sourdine); font-size: 14.5px; margin: 0; }
+    .carte code { font-family: var(--mono); color: var(--creme); font-size: 13px; }
+
+    .etapes { margin-top: 26px; }
+    .etapes h2 {
+      text-align: center; font-family: var(--titre); font-size: clamp(26px, 4vw, 38px);
+      font-weight: 800; text-transform: uppercase; margin: 14px 0 26px;
+    }
+    .pas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .pas .un { background: var(--panneau); border: 1px solid var(--trait); border-radius: 18px; padding: 24px 22px; }
+    .pas .num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; border-radius: 50%; border: 2px dashed var(--eclair);
+      color: var(--eclair); font-weight: 800; margin-bottom: 10px; font-family: var(--mono);
+    }
+    .pas h3 { margin: 0 0 6px; font-size: 17px; font-weight: 700; }
+    .pas p { color: var(--sourdine); font-size: 14.5px; margin: 0; }
+
+    section.privee {
+      margin: 64px 0 0; border-radius: 18px; padding: 44px 40px;
+      background: #101115; border: 1px solid var(--trait);
+    }
+    section.privee h2 {
+      font-family: var(--titre); font-size: clamp(24px, 3.6vw, 32px);
+      font-weight: 800; text-transform: uppercase; margin: 0 0 12px; color: var(--eclair);
+    }
+    section.privee p { color: var(--sourdine); font-size: 15.5px; max-width: 700px; }
+    section.privee strong { color: var(--creme); }
+
+    .famille { text-align: center; margin: 60px 0 0; }
+    .famille p { color: var(--sourdine); }
+    .famille a { color: var(--eclair); font-weight: 700; text-decoration: none; }
+    footer { text-align: center; color: var(--sourdine); font-size: 13.5px; padding: 40px 0 30px; }
+    footer a { color: var(--eclair); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="pellicule"></div>
+  <div class="contenu">
+    <header class="site">
+      <img src="flash.svg" alt="Flash">
+      <span class="nom">Flash</span>
+      <nav>
+        <a href="#fonctions">Ce qu'il fait</a>
+        <a href="https://github.com/N0rooo/flash">GitHub</a>
+      </nav>
+    </header>
+
+    <section class="heros">
+      <img class="mascotte" src="flash.svg" alt="Flash, le chien qui rapporte tes photos dans l'ordre">
+      <h1>Il rapporte tes photos<br><span class="jaune">dans l'ordre</span></h1>
+      <p class="sous">Des années de photos et de vidéos en vrac ? Glisse tes dossiers dans la
+      fenêtre : Flash lit la vraie date de prise de vue et classe tout, numéroté à l'heure
+      près. Les originaux ne bougent pas.</p>
+      <div class="cta">
+        <a class="bouton" href="https://github.com/N0rooo/flash">Voir sur GitHub</a>
+      </div>
+      <p class="precision">App Mac gratuite, version signée à télécharger bientôt</p>
+
+      <div class="demo" aria-hidden="true">
+        <div class="barre">
+          <span class="rond" style="background:#f26b5e"></span>
+          <span class="rond" style="background:#f5bf4f"></span>
+          <span class="rond" style="background:#5fc26d"></span>
+        </div>
+        <div class="corps">
+          <div class="zone">
+            <div class="gros">Lance tes dossiers ici, Flash rapporte</div>
+            <div class="petit">Dossiers entiers ou fichiers, photos et vidéos, par milliers</div>
+          </div>
+          <div class="jauge"><div></div></div>
+          <p class="etat">Flash rapporte… 340/512</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="punch">Dix ans de pagaille,<br><span class="jaune">un seul album</span></div>
+
+    <div class="tete-section" id="fonctions"><span class="surtitre">Ce qu'il fait</span></div>
+    <section class="grille">
+      <div class="carte">
+        <h3>La vraie date, pas la fausse</h3>
+        <p>EXIF pour les photos, métadonnées pour les vidéos, recoupées avec les dates du
+        fichier pour déjouer les transferts qui les réécrivent. À défaut, la date se lit dans
+        le nom du fichier.</p>
+      </div>
+      <div class="carte">
+        <h3>À ton format</h3>
+        <p>Dossiers et noms composés à ta façon : glisse les morceaux dans l'ordre, choisis le
+        style, <code>10 avril 2026</code>, <code>10 avr. 26</code> ou <code>10.04.26</code>.</p>
+      </div>
+      <div class="carte">
+        <h3>Doublons ignorés</h3>
+        <p>Chaque fichier a son empreinte : redéposer un dossier déjà traité n'importe rien en
+        double, jamais.</p>
+      </div>
+      <div class="carte">
+        <h3>Rien n'est perdu</h3>
+        <p>Un fichier sans date fiable attend dans « à vérifier » sous son nom d'origine. Dès
+        qu'un re-dépôt apporte sa vraie date, il rejoint l'album tout seul.</p>
+      </div>
+      <div class="carte">
+        <h3>Numérotation vivante</h3>
+        <p>Les photos d'un jour sont numérotées par heure. Un lot plus ancien arrive après
+        coup ? Toute la journée se renumérote automatiquement.</p>
+      </div>
+      <div class="carte">
+        <h3>Originaux intacts</h3>
+        <p>Copie par défaut : tes dossiers sources restent tels quels. Le déplacement, c'est
+        toi qui le décides, avec une case à cocher.</p>
+      </div>
+    </section>
+
+    <section class="etapes">
+      <div class="tete-section"><span class="surtitre">Mode d'emploi</span></div>
+      <h2>Trois gestes, un album rangé</h2>
+      <div class="pas">
+        <div class="un"><span class="num">1</span><h3>Choisis la destination</h3><p>Le dossier où Flash construit ton arborescence de souvenirs.</p></div>
+        <div class="un"><span class="num">2</span><h3>Glisse tes dossiers</h3><p>Par milliers s'il le faut. Flash renifle, lit les dates, rapporte.</p></div>
+        <div class="un"><span class="num">3</span><h3>Ouvre ton album</h3><p>Année, mois, jour, tout dans l'ordre de prise de vue. Redépose quand tu veux, rien ne se duplique.</p></div>
+      </div>
+    </section>
+
+    <section class="privee">
+      <h2>Hors ligne, point final</h2>
+      <p>Flash travaille <strong>entièrement sur ta machine</strong> : pas d'IA, pas de serveur,
+      pas de compte, pas de télémétrie. Tes photos ne quittent jamais ton disque.</p>
+    </section>
+
+    <div class="famille">
+      <p>La famille : <a href="https://n0rooo.github.io/medor/">Médor</a> range ta boîte mail ·
+      <a href="https://n0rooo.github.io/filou/">Filou</a> range tes fichiers</p>
+    </div>
+
+    <footer>
+      Fait avec des croquettes par <a href="https://github.com/N0rooo">Thomas Aubert</a> ·
+      <a href="https://github.com/N0rooo/flash">Code source</a>
+    </footer>
+  </div>
+</body>
+</html>
