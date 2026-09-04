@@ -96,13 +96,14 @@
     .demo .etat { color: var(--sourdine); font-size: 13px; margin-top: 8px; font-family: var(--mono); }
 
     .punch {
-      text-align: center; padding: 34px 26px; font-family: var(--titre);
-      font-size: clamp(24px, 3.6vw, 34px); font-weight: 800; text-transform: uppercase;
-      max-width: 640px; margin: 56px auto 8px;
-      background: var(--panneau); border: 1px solid var(--trait); border-radius: 18px;
-      transform: rotate(0.5deg);
+      text-align: center; padding: 40px 20px 6px; font-family: var(--titre);
+      font-size: clamp(30px, 5.4vw, 50px); font-weight: 800; text-transform: uppercase;
+      margin: 40px auto 0; line-height: 1.1;
     }
-    .punch .jaune { color: var(--eclair); }
+    .punch .jaune {
+      color: var(--eclair);
+      text-shadow: 0 0 34px rgba(247, 201, 72, 0.55), 0 0 80px rgba(247, 201, 72, 0.25);
+    }
 
     .tete-section { text-align: center; margin-top: 60px; }
     .surtitre {
@@ -110,33 +111,53 @@
       letter-spacing: 0.16em; text-transform: uppercase; color: var(--eclair);
       border: 1.5px dashed var(--eclair); border-radius: 999px; padding: 6px 16px;
     }
-    .grille {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 18px; padding: 26px 0 10px;
+    /* la bande de pellicule : les cartes sont des photogrammes, ça défile */
+    .film { margin: 26px 0 10px; overflow-x: auto; border-radius: 16px; }
+    .cadres {
+      display: flex; gap: 14px; min-width: 100%; width: max-content;
+      position: relative; background: #0b0c10; border-radius: 16px;
+      padding: 36px 18px;
     }
-    .carte {
-      background: var(--panneau); border: 1px solid var(--trait); border-radius: 18px;
-      padding: 24px 22px; transition: transform 0.16s ease, border-color 0.16s ease;
+    .cadres::before, .cadres::after {
+      content: ''; position: absolute; left: 16px; right: 16px; height: 9px;
+      background-image: repeating-linear-gradient(90deg,
+        transparent 0 9px, #e9e2d2 9px 21px, transparent 21px 30px);
+      background-size: 30px 9px;
     }
-    .carte:hover { transform: translateY(-4px); border-color: rgba(247, 201, 72, 0.5); }
-    .carte h3 { font-family: var(--titre); font-size: 20px; font-weight: 700; margin: 0 0 6px; }
-    .carte p { color: var(--sourdine); font-size: 14.5px; margin: 0; }
-    .carte code { font-family: var(--mono); color: var(--creme); font-size: 13px; }
+    .cadres::before { top: 14px; }
+    .cadres::after { bottom: 14px; }
+    .cadre {
+      width: 300px; flex: none;
+      background: var(--panneau); border: 1px solid var(--trait); border-radius: 6px;
+      padding: 20px 18px; transition: border-color 0.16s ease;
+    }
+    .cadre:hover { border-color: rgba(247, 201, 72, 0.6); }
+    .cadre h3 { font-family: var(--titre); font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+    .cadre p { color: var(--sourdine); font-size: 14.5px; margin: 0; }
+    .cadre code { font-family: var(--mono); color: var(--creme); font-size: 13px; }
+    .indice-defile { text-align: center; color: var(--sourdine); font-size: 12.5px; font-family: var(--mono); margin: 8px 0 0; }
 
     .etapes { margin-top: 26px; }
     .etapes h2 {
       text-align: center; font-family: var(--titre); font-size: clamp(26px, 4vw, 38px);
       font-weight: 800; text-transform: uppercase; margin: 14px 0 26px;
     }
-    .pas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-    .pas .un { background: var(--panneau); border: 1px solid var(--trait); border-radius: 18px; padding: 24px 22px; }
+    /* trois tirages photo posés sur la table de la chambre noire */
+    .pas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+    .pas .un {
+      background: #f2ecdd; color: #2a2620; border-radius: 4px;
+      padding: 20px 18px 26px; box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+    }
+    .pas .un:nth-child(1) { transform: rotate(-1.6deg); }
+    .pas .un:nth-child(2) { transform: rotate(1.1deg); }
+    .pas .un:nth-child(3) { transform: rotate(-0.8deg); }
     .pas .num {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 38px; height: 38px; border-radius: 50%; border: 2px dashed var(--eclair);
-      color: var(--eclair); font-weight: 800; margin-bottom: 10px; font-family: var(--mono);
+      width: 38px; height: 38px; border-radius: 50%; border: 2px dashed #c98a12;
+      color: #8a6200; font-weight: 800; margin-bottom: 10px; font-family: var(--mono);
     }
-    .pas h3 { margin: 0 0 6px; font-size: 17px; font-weight: 700; }
-    .pas p { color: var(--sourdine); font-size: 14.5px; margin: 0; }
+    .pas h3 { margin: 0 0 6px; font-size: 17px; font-weight: 700; color: #2a2620; }
+    .pas p { color: #6b625a; font-size: 14.5px; margin: 0; }
 
     section.privee {
       margin: 64px 0 0; border-radius: 18px; padding: 44px 40px;
@@ -199,39 +220,40 @@
     <div class="punch">Dix ans de pagaille,<br><span class="jaune">un seul album</span></div>
 
     <div class="tete-section" id="fonctions"><span class="surtitre">Ce qu'il fait</span></div>
-    <section class="grille">
-      <div class="carte">
+    <section class="film"><div class="cadres">
+      <div class="cadre">
         <h3>La vraie date, pas la fausse</h3>
         <p>EXIF pour les photos, métadonnées pour les vidéos, recoupées avec les dates du
         fichier pour déjouer les transferts qui les réécrivent. À défaut, la date se lit dans
         le nom du fichier.</p>
       </div>
-      <div class="carte">
+      <div class="cadre">
         <h3>À ton format</h3>
         <p>Dossiers et noms composés à ta façon : glisse les morceaux dans l'ordre, choisis le
         style, <code>10 avril 2026</code>, <code>10 avr. 26</code> ou <code>10.04.26</code>.</p>
       </div>
-      <div class="carte">
+      <div class="cadre">
         <h3>Doublons ignorés</h3>
         <p>Chaque fichier a son empreinte : redéposer un dossier déjà traité n'importe rien en
         double, jamais.</p>
       </div>
-      <div class="carte">
+      <div class="cadre">
         <h3>Rien n'est perdu</h3>
         <p>Un fichier sans date fiable attend dans « à vérifier » sous son nom d'origine. Dès
         qu'un re-dépôt apporte sa vraie date, il rejoint l'album tout seul.</p>
       </div>
-      <div class="carte">
+      <div class="cadre">
         <h3>Numérotation vivante</h3>
         <p>Les photos d'un jour sont numérotées par heure. Un lot plus ancien arrive après
         coup ? Toute la journée se renumérote automatiquement.</p>
       </div>
-      <div class="carte">
+      <div class="cadre">
         <h3>Originaux intacts</h3>
         <p>Copie par défaut : tes dossiers sources restent tels quels. Le déplacement, c'est
         toi qui le décides, avec une case à cocher.</p>
       </div>
-    </section>
+    </div></section>
+    <p class="indice-defile">Fais défiler la pellicule pour voir la suite</p>
 
     <section class="etapes">
       <div class="tete-section"><span class="surtitre">Mode d'emploi</span></div>
@@ -251,7 +273,8 @@
 
     <div class="famille">
       <p>La famille : <a href="https://n0rooo.github.io/medor/">Médor</a> range ta boîte mail ·
-      <a href="https://n0rooo.github.io/filou/">Filou</a> range tes fichiers</p>
+      <a href="https://n0rooo.github.io/filou/">Filou</a> range tes fichiers ·
+      <a href="https://rapporto.ai">Rapporto</a>, le grand frère</p>
     </div>
 
     <footer>
