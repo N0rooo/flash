@@ -300,8 +300,9 @@ function apercu() {
   apercuEl.textContent = (chemin.length ? chemin.join('/') + '/' : '') + nomJoint + '.jpg'
 }
 
-// Glisser maison : dragDropEnabled de Tauri intercepte le drag HTML5,
-// on suit donc la souris nous-mêmes.
+// Glisser maison : dragDropEnabled de Tauri intercepte le drag HTML5, on
+// suit donc la souris nous-mêmes — bulle fantôme sous le curseur, pastille
+// d'origine en creux, réordonnancement en direct pendant le geste.
 let glisse = null
 let vientDeGlisser = false
 
@@ -337,6 +338,7 @@ function dessinerBarre(conteneur, liste) {
     const el = document.createElement('span')
     el.className = 'chip' + (c.actif ? '' : ' coupe')
     el.textContent = LIBELLES[c.id]
+    el.dataset.id = c.id
     el.addEventListener('click', () => {
       if (vientDeGlisser) return
       c.actif = !c.actif
@@ -346,7 +348,13 @@ function dessinerBarre(conteneur, liste) {
     el.addEventListener('mousedown', e => {
       if (e.button !== 0) return
       e.preventDefault()
-      glisse = { liste, i, el, conteneur, x: e.clientX, y: e.clientY, bouge: false }
+      const r = el.getBoundingClientRect()
+      glisse = {
+        liste, el, conteneur,
+        x: e.clientX, y: e.clientY,
+        dx: e.clientX - r.left, dy: e.clientY - r.top,
+        bouge: false, fantome: null,
+      }
     })
     conteneur.appendChild(el)
   })
@@ -354,34 +362,43 @@ function dessinerBarre(conteneur, liste) {
 
 document.addEventListener('mousemove', e => {
   if (!glisse) return
-  if (!glisse.bouge && Math.hypot(e.clientX - glisse.x, e.clientY - glisse.y) > 5) {
+  if (!glisse.bouge) {
+    if (Math.hypot(e.clientX - glisse.x, e.clientY - glisse.y) <= 5) return
     glisse.bouge = true
-    glisse.el.classList.add('trainee')
+    const fantome = glisse.el.cloneNode(true)
+    fantome.classList.add('fantome')
+    fantome.style.width = glisse.el.getBoundingClientRect().width + 'px'
+    document.body.appendChild(fantome)
+    glisse.fantome = fantome
+    glisse.el.classList.add('creux')
+    document.body.classList.add('attrape')
   }
-  if (!glisse.bouge) return
-  for (const chip of glisse.conteneur.children) chip.classList.remove('survole')
+  glisse.fantome.style.left = e.clientX - glisse.dx + 'px'
+  glisse.fantome.style.top = e.clientY - glisse.dy + 'px'
+  // La bulle est en pointer-events:none : elementFromPoint voit à travers.
   const sous = document.elementFromPoint(e.clientX, e.clientY)
   const cible = sous && sous.closest('.chip')
   if (cible && cible !== glisse.el && cible.parentElement === glisse.conteneur) {
-    cible.classList.add('survole')
+    const r = cible.getBoundingClientRect()
+    const avant = e.clientX < r.left + r.width / 2
+    glisse.conteneur.insertBefore(glisse.el, avant ? cible : cible.nextSibling)
   }
 })
 
-document.addEventListener('mouseup', e => {
+document.addEventListener('mouseup', () => {
   if (!glisse) return
   const g = glisse
   glisse = null
   if (!g.bouge) return
   vientDeGlisser = true
   setTimeout(() => { vientDeGlisser = false }, 0)
-  const sous = document.elementFromPoint(e.clientX, e.clientY)
-  const cible = sous && sous.closest('.chip')
-  if (cible && cible !== g.el && cible.parentElement === g.conteneur) {
-    const j = [...g.conteneur.children].indexOf(cible)
-    const [pris] = g.liste.splice(g.i, 1)
-    g.liste.splice(j, 0, pris)
-    sauverFormat()
-  }
+  g.fantome.remove()
+  g.el.classList.remove('creux')
+  document.body.classList.remove('attrape')
+  // L'ordre final est celui du DOM, réordonné en direct pendant le geste.
+  const ordreIds = [...g.conteneur.children].map(c => c.dataset.id)
+  g.liste.sort((a, b) => ordreIds.indexOf(a.id) - ordreIds.indexOf(b.id))
+  sauverFormat()
   toutDessiner()
 })
 

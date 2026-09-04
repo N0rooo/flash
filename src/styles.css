@@ -147,8 +147,17 @@ header .coin { margin-left: auto; }
   background: transparent; color: var(--sourdine); border-color: var(--trait);
   font-weight: 600;
 }
-.chip.trainee { opacity: 0.45; }
-.chip.survole { outline: 2px dashed var(--eclair); outline-offset: 2px; }
+.chip.fantome {
+  position: fixed; z-index: 100; pointer-events: none; margin: 0;
+  transform: rotate(4deg) scale(1.06);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+}
+.chip.creux {
+  opacity: 0.3; background: transparent; color: var(--sourdine);
+  border: 1.5px dashed var(--eclair);
+}
+body.attrape { cursor: grabbing; user-select: none; }
+body.attrape .chip { cursor: grabbing; }
 #motcle {
   margin-top: 10px; width: 100%; font-family: var(--texte); font-size: 13.5px;
   background: var(--nuit); color: var(--creme); border: 1.5px solid var(--trait);
