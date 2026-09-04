@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Flash</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="pellicule"></div>
+  <main>
+    <header>
+      <img class="logo" src="flash.svg" alt="">
+      <div>
+        <h1>Flash</h1>
+        <p class="tagline">le chien qui rapporte tes photos dans l'ordre</p>
+      </div>
+    </header>
+    <p class="subtitle">Photos et vidéos classées en <code>Année / mois / JJ mois N</code>, dans l'ordre de prise de vue.</p>
+
+    <section class="dest-row">
+      <div class="dest-info">
+        <span class="dest-label">Destination</span>
+        <span id="destPath" class="dest-path empty">Aucun dossier choisi</span>
+      </div>
+      <button id="chooseDest">Choisir…</button>
+    </section>
+
+    <label class="move-row">
+      <input type="checkbox" id="moveToggle">
+      <span>Déplacer les fichiers au lieu de les copier</span>
+    </label>
+
+    <div id="dropzone">
+      <svg class="dz-eclair" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M13 2 L5 13 L11 13 L9.5 22 L19 10 L12.6 10 Z" fill="currentColor"/>
+      </svg>
+      <p class="dz-main">Lance tes dossiers ici, Flash rapporte</p>
+      <p class="dz-sub">Dossiers entiers ou fichiers, photos et vidéos, par milliers</p>
+    </div>
+
+    <section id="progress" hidden>
+      <div class="bar"><div id="barFill"></div></div>
+      <p id="progressText">Flash s'échauffe…</p>
+    </section>
+
+    <section id="result" hidden>
+      <p id="resultText"></p>
+      <button id="openDest" class="ghost">Ouvrir le dossier</button>
+      <ul id="uncertainList"></ul>
+      <ul id="errorList"></ul>
+    </section>
+  </main>
+  <script src="main.js"></script>
+</body>
+</html>

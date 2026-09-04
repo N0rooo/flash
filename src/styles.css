@@ -1,0 +1,106 @@
+/* Flash — identité chambre noire : charbon, jaune éclair, pellicule.
+   Rien à voir avec le papier de Médor ni la crème de Filou. */
+
+:root {
+  --nuit: #1c1e24;
+  --panneau: #24272f;
+  --creme: #f0ead8;
+  --sourdine: #9aa0ab;
+  --eclair: #f7c948;
+  --eclair-vif: #ffd869;
+  --rouge-labo: #ff5d5d;
+  --trait: #343845;
+  --titre: 'Avenir Next Condensed', 'Avenir Next', 'Arial Narrow', sans-serif;
+  --texte: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0; font-family: var(--texte); font-size: 15px;
+  color: var(--creme); background: var(--nuit);
+  -webkit-font-smoothing: antialiased; line-height: 1.5;
+}
+
+/* bande de pellicule : la signature de Flash */
+.pellicule {
+  height: 22px; background: #0b0c10;
+  background-image: repeating-linear-gradient(90deg,
+    transparent 0 9px, #e9e2d2 9px 21px, transparent 21px 30px);
+  background-size: 30px 9px; background-repeat: repeat-x; background-position: 0 center;
+}
+
+main { max-width: 680px; margin: 0 auto; padding: 22px 24px 50px; }
+
+header { display: flex; align-items: center; gap: 14px; }
+.logo { width: 52px; height: 52px; border-radius: 14px; }
+h1 {
+  font-family: var(--titre); font-size: 40px; font-weight: 800;
+  letter-spacing: 0.02em; text-transform: uppercase; margin: 0; line-height: 1;
+  color: var(--eclair);
+}
+.tagline { margin: 2px 0 0; color: var(--sourdine); font-size: 14px; font-style: italic; }
+.subtitle { color: var(--sourdine); font-size: 13.5px; margin: 14px 0 20px; }
+.subtitle code { font-family: var(--mono); color: var(--creme); background: var(--panneau); padding: 1px 6px; border-radius: 6px; }
+
+.dest-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--panneau); border: 1px solid var(--trait); border-radius: 14px;
+  padding: 12px 16px;
+}
+.dest-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.dest-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sourdine); }
+.dest-path { font-family: var(--mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dest-path.empty { color: var(--sourdine); font-style: italic; }
+
+button {
+  font-family: var(--texte); font-weight: 700; font-size: 14px;
+  background: var(--eclair); color: #1c1600; border: none; border-radius: 11px;
+  padding: 10px 20px; cursor: pointer; transition: background 0.12s ease, transform 0.12s ease;
+}
+button:hover { background: var(--eclair-vif); transform: translateY(-1px); }
+button.ghost {
+  background: transparent; color: var(--eclair);
+  border: 1.5px solid var(--eclair); padding: 8px 18px;
+}
+button.ghost:hover { background: rgba(247, 201, 72, 0.12); }
+
+.move-row {
+  display: flex; align-items: center; gap: 10px; margin: 14px 2px;
+  color: var(--sourdine); font-size: 13.5px; cursor: pointer; user-select: none;
+}
+.move-row input { accent-color: var(--eclair); width: 15px; height: 15px; }
+
+#dropzone {
+  margin-top: 8px; padding: 52px 30px; text-align: center;
+  border: 2px dashed rgba(247, 201, 72, 0.55); border-radius: 20px;
+  background: rgba(247, 201, 72, 0.04);
+  transition: box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+#dropzone.hover {
+  border-color: var(--eclair-vif); background: rgba(247, 201, 72, 0.1);
+  box-shadow: 0 0 60px rgba(247, 201, 72, 0.25);
+}
+#dropzone.disabled { opacity: 0.45; pointer-events: none; }
+.dz-eclair { width: 46px; height: 46px; color: var(--eclair); }
+.dz-main { font-family: var(--titre); font-size: 22px; font-weight: 700; margin: 12px 0 4px; }
+.dz-sub { color: var(--sourdine); font-size: 13px; margin: 0; }
+
+#progress { margin-top: 22px; }
+.bar {
+  height: 8px; background: var(--panneau); border-radius: 999px; overflow: hidden;
+  border: 1px solid var(--trait);
+}
+#barFill {
+  height: 100%; width: 0; background: var(--eclair); border-radius: 999px;
+  transition: width 0.3s ease;
+}
+#progressText { color: var(--sourdine); font-size: 13.5px; margin-top: 8px; }
+
+#result { margin-top: 22px; }
+#resultText { font-size: 15px; font-weight: 600; margin: 0 0 12px; }
+#uncertainList, #errorList { list-style: none; padding: 0; margin: 12px 0 0; font-size: 13px; }
+#uncertainList li { color: var(--eclair); font-family: var(--mono); padding: 1px 0; }
+#uncertainList li.head { color: var(--creme); font-family: var(--texte); font-weight: 600; margin-bottom: 4px; }
+#errorList li { color: var(--rouge-labo); font-family: var(--mono); padding: 1px 0; }

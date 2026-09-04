@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Flash",
+  "version": "0.1.0",
+  "identifier": "dev.aubert.flash",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Flash",
+        "width": 760,
+        "height": 700,
+        "minWidth": 540,
+        "minHeight": 520,
+        "dragDropEnabled": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "macOS": {
+      "signingIdentity": "Developer ID Application: GATEAD (HSAFDUBFHM)",
+      "hardenedRuntime": true
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
