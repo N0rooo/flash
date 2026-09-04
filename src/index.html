@@ -14,6 +14,7 @@
         <h1>Flash</h1>
         <p class="tagline">le chien qui rapporte tes photos dans l'ordre</p>
       </div>
+      <button id="revoir" class="ghost coin">Présentation</button>
     </header>
     <p class="subtitle">Photos et vidéos classées en <code>Année / mois / JJ mois N</code>, dans l'ordre de prise de vue.</p>
 
@@ -50,6 +51,41 @@
       <ul id="errorList"></ul>
     </section>
   </main>
+  <div id="voile" hidden>
+    <div class="modale">
+      <div id="etape0">
+        <div class="accueil">
+          <img src="flash.svg" alt="">
+          <h2>Salut, moi c'est Flash.</h2>
+          <p>Lance-moi des dossiers entiers de photos et de vidéos : je lis la vraie date de
+          prise de vue (EXIF, métadonnées vidéo, ou le nom du fichier), et je rapporte tout
+          bien classé en <code>Année / mois / JJ mois N</code>, numéroté dans l'ordre de la
+          journée. Les doublons sont ignorés, les fichiers sans date fiable attendent dans
+          « à vérifier », et je copie par défaut : tes originaux ne bougent pas.</p>
+        </div>
+      </div>
+      <div id="etape1" hidden>
+        <h2>Où je rapporte tout ça ?</h2>
+        <p>Choisis le dossier de destination : c'est là que je construis ton arborescence de
+        souvenirs. Tu pourras le changer à tout moment.</p>
+        <div class="dest-row modale-dest">
+          <div class="dest-info">
+            <span class="dest-label">Destination</span>
+            <span id="destPathOnb" class="dest-path empty">Aucun dossier choisi</span>
+          </div>
+          <button id="chooseDestOnb">Choisir…</button>
+        </div>
+        <p class="note-onb">Astuce : coche « Déplacer les fichiers » sur l'écran principal si tu
+        veux vider les dossiers d'origine au lieu de copier.</p>
+      </div>
+      <div class="actions">
+        <button id="onbRetour" class="ghost" hidden>Retour</button>
+        <button id="onbSuivant">Continuer</button>
+        <button id="onbPasser" class="ghost">Passer</button>
+      </div>
+      <div class="points"><span id="pt0" class="actif"></span><span id="pt1"></span></div>
+    </div>
+  </div>
   <script src="main.js"></script>
 </body>
 </html>

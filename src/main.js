@@ -137,3 +137,56 @@ getCurrentWebview().onDragDropEvent(event => {
 })
 
 showDest()
+
+// ----------------------------------------------------------- onboarding
+const voile = document.getElementById('voile')
+const etapes = [document.getElementById('etape0'), document.getElementById('etape1')]
+const points = [document.getElementById('pt0'), document.getElementById('pt1')]
+const onbRetour = document.getElementById('onbRetour')
+const onbSuivant = document.getElementById('onbSuivant')
+const onbPasser = document.getElementById('onbPasser')
+const destPathOnb = document.getElementById('destPathOnb')
+let etape = 0
+
+function montrerEtape(i) {
+  etape = i
+  etapes.forEach((el, j) => (el.hidden = j !== i))
+  points.forEach((el, j) => el.classList.toggle('actif', j === i))
+  onbRetour.hidden = i === 0
+  onbPasser.hidden = i !== 0
+  onbSuivant.textContent = i === etapes.length - 1 ? "C'est parti" : 'Continuer'
+  if (destPathOnb && dest) {
+    destPathOnb.textContent = dest
+    destPathOnb.classList.remove('empty')
+  }
+}
+
+function ouvrirOnboarding() {
+  voile.hidden = false
+  montrerEtape(0)
+}
+
+function fermerOnboarding() {
+  voile.hidden = true
+  localStorage.setItem('flashOnboarde', 'oui')
+}
+
+onbSuivant.addEventListener('click', () => {
+  if (etape < etapes.length - 1) montrerEtape(etape + 1)
+  else fermerOnboarding()
+})
+onbRetour.addEventListener('click', () => montrerEtape(Math.max(0, etape - 1)))
+onbPasser.addEventListener('click', fermerOnboarding)
+document.getElementById('revoir').addEventListener('click', ouvrirOnboarding)
+document.getElementById('chooseDestOnb').addEventListener('click', async () => {
+  const picked = await invoke('choose_dest')
+  if (picked) {
+    dest = picked
+    localStorage.setItem('dest', dest)
+    showDest()
+    destPathOnb.textContent = dest
+    destPathOnb.classList.remove('empty')
+  }
+})
+
+if (!localStorage.getItem('flashOnboarde')) ouvrirOnboarding()

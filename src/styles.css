@@ -104,3 +104,29 @@ button.ghost:hover { background: rgba(247, 201, 72, 0.12); }
 #uncertainList li { color: var(--eclair); font-family: var(--mono); padding: 1px 0; }
 #uncertainList li.head { color: var(--creme); font-family: var(--texte); font-weight: 600; margin-bottom: 4px; }
 #errorList li { color: var(--rouge-labo); font-family: var(--mono); padding: 1px 0; }
+
+/* ------------------------------------------------------------- onboarding */
+header .coin { margin-left: auto; }
+#voile {
+  position: fixed; inset: 0; background: rgba(8, 9, 12, 0.72);
+  display: flex; align-items: center; justify-content: center; z-index: 50;
+}
+#voile .modale {
+  background: var(--panneau); border: 1px solid var(--trait); border-radius: 20px;
+  padding: 30px 32px; width: min(520px, calc(100vw - 48px));
+  max-height: 82vh; overflow: auto;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+#voile h2 { font-family: var(--titre); font-size: 26px; margin: 0 0 8px; color: var(--eclair); }
+#voile p { color: var(--sourdine); font-size: 14px; }
+#voile p code { font-family: var(--mono); color: var(--creme); }
+.accueil { text-align: center; }
+.accueil img { width: 104px; height: 104px; border-radius: 24px; }
+.accueil h2 { margin-top: 12px; }
+.accueil p { text-align: left; }
+.modale-dest { margin: 14px 0; }
+.note-onb { font-size: 13px; font-style: italic; }
+#voile .actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
+.points { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+.points span { width: 8px; height: 8px; border-radius: 50%; background: var(--trait); }
+.points span.actif { background: var(--eclair); }
