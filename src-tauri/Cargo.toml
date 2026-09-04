@@ -25,3 +25,7 @@ filetime = "0.2"
 [profile.release]
 strip = true
 lto = true
+
+[[bin]]
+name = "Flash"
+path = "src/main.rs"
