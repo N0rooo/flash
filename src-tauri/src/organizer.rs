@@ -317,59 +317,119 @@ fn hash_key(path: &Path, size: u64) -> std::io::Result<String> {
 
 // ---------- Nommage ----------
 
-/// Format de nom choisi par l'utilisateur : ordre des éléments et mot-clé
-/// libre. Le numéro est toujours garanti (unicité dans la journée) ; les
-/// dossiers restent Année/mois quoi qu'il arrive.
+/// Format choisi par l'utilisateur : dossiers parents, éléments du nom de
+/// fichier (dans l'ordre), mot-clé libre. Si deux fichiers obtiennent le même
+/// nom, le numéro est ajouté d'office (unicité garantie).
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NameFormat {
     pub elements: Vec<String>,
+    #[serde(default = "dossiers_par_defaut")]
+    pub dossiers: Vec<String>,
     pub motcle: String,
+}
+
+fn dossiers_par_defaut() -> Vec<String> {
+    vec!["annee".into(), "mois".into()]
 }
 
 impl Default for NameFormat {
     fn default() -> Self {
         NameFormat {
             elements: vec!["jour".into(), "mois".into(), "numero".into()],
+            dossiers: dossiers_par_defaut(),
             motcle: String::new(),
         }
     }
 }
 
-fn target_rel(ts: &NaiveDateTime, n: usize, ext: &str, fmt: &NameFormat) -> String {
-    let month = MONTHS_FR[ts.month0() as usize];
-    let mut parts: Vec<String> = Vec::new();
-    let mut numero_place = false;
-    for element in &fmt.elements {
-        match element.as_str() {
-            "motcle" => {
-                let propre: String = fmt
-                    .motcle
-                    .trim()
-                    .chars()
-                    .filter(|c| *c != '/' && *c != ':' && !c.is_control())
-                    .collect();
-                if !propre.is_empty() {
-                    parts.push(propre);
-                }
+fn morceau(ts: &NaiveDateTime, element: &str, fmt: &NameFormat, n: usize) -> Option<String> {
+    match element {
+        "motcle" => {
+            let propre: String = fmt
+                .motcle
+                .trim()
+                .chars()
+                .filter(|c| *c != '/' && *c != ':' && !c.is_control())
+                .collect();
+            if propre.is_empty() {
+                None
+            } else {
+                Some(propre)
             }
-            "jour" => parts.push(ts.day().to_string()),
-            "mois" => parts.push(month.to_string()),
-            "annee" => parts.push(ts.year().to_string()),
-            "heure" => parts.push(format!("{:02}h{:02}", ts.hour(), ts.minute())),
-            "numero" => {
-                parts.push(n.to_string());
-                numero_place = true;
-            }
-            _ => {}
         }
+        "jour" => Some(ts.day().to_string()),
+        "mois" => Some(MONTHS_FR[ts.month0() as usize].to_string()),
+        "annee" => Some(ts.year().to_string()),
+        "heure" => Some(format!("{:02}h{:02}", ts.hour(), ts.minute())),
+        "numero" => Some(n.to_string()),
+        _ => None,
     }
-    if parts.is_empty() {
-        parts = vec![ts.day().to_string(), month.to_string()];
+}
+
+/// Un segment de dossier correspond-il au jeton du format ?
+fn segment_correspond(seg: &str, token: &str, fmt: &NameFormat) -> bool {
+    match token {
+        "annee" => seg.len() == 4 && seg.chars().all(|c| c.is_ascii_digit()),
+        "mois" => MONTHS_FR.contains(&seg),
+        "jour" => !seg.is_empty() && seg.len() <= 2 && seg.chars().all(|c| c.is_ascii_digit()),
+        "heure" => seg.len() == 5 && seg.as_bytes().get(2) == Some(&b'h'),
+        "motcle" => {
+            let propre: String = fmt
+                .motcle
+                .trim()
+                .chars()
+                .filter(|c| *c != '/' && *c != ':' && !c.is_control())
+                .collect();
+            !propre.is_empty() && seg == propre
+        }
+        _ => false,
     }
-    if !numero_place {
-        parts.push(n.to_string());
+}
+
+/// Un chemin relatif suit-il la structure de dossiers du format courant ?
+fn suit_structure(rel: &Path, fmt: &NameFormat) -> bool {
+    let jetons: Vec<&String> = fmt.dossiers.iter().filter(|d| d.as_str() != "numero").collect();
+    let comps: Vec<String> = rel
+        .components()
+        .map(|c| c.as_os_str().to_string_lossy().into_owned())
+        .collect();
+    // autant de dossiers que de jetons, plus le nom de fichier
+    if comps.len() != jetons.len() + 1 {
+        return false;
     }
-    format!("{}/{}/{}.{}", ts.year(), month, parts.join(" "), ext)
+    jetons
+        .iter()
+        .zip(&comps)
+        .all(|(token, seg)| segment_correspond(seg, token, fmt))
+}
+
+fn target_rel(
+    ts: &NaiveDateTime,
+    n: usize,
+    ext: &str,
+    fmt: &NameFormat,
+    force_numero: bool,
+) -> String {
+    let mut chemin: Vec<String> = fmt
+        .dossiers
+        .iter()
+        .filter(|d| d.as_str() != "numero")
+        .filter_map(|d| morceau(ts, d, fmt, n))
+        .collect();
+    let mut nom: Vec<String> = fmt
+        .elements
+        .iter()
+        .filter_map(|e| morceau(ts, e, fmt, n))
+        .collect();
+    if nom.is_empty() {
+        nom.push(ts.day().to_string());
+        nom.push(MONTHS_FR[ts.month0() as usize].to_string());
+    }
+    if force_numero && !fmt.elements.iter().any(|e| e == "numero") {
+        nom.push(n.to_string());
+    }
+    chemin.push(format!("{}.{}", nom.join(" "), ext));
+    chemin.join("/")
 }
 
 // ---------- Index ----------
@@ -435,7 +495,7 @@ fn save_index(dest: &Path, index: &BTreeMap<String, Rec>) -> std::io::Result<()>
 
 // Adopte les fichiers présents dans Année/mois mais absents de l'index
 // (index supprimé, fichiers ajoutés à la main…) — l'index n'est qu'un cache.
-fn adopt_orphans(dest: &Path, index: &mut BTreeMap<String, Rec>) {
+fn adopt_orphans(dest: &Path, index: &mut BTreeMap<String, Rec>, fmt: &NameFormat) {
     // Les fichiers de « à vérifier » restent indexés (anti-doublons)
     if let Ok(files) = fs::read_dir(dest.join(REVIEW_DIR)) {
         for f in files.flatten() {
@@ -462,49 +522,49 @@ fn adopt_orphans(dest: &Path, index: &mut BTreeMap<String, Rec>) {
             );
         }
     }
-    let Ok(years) = fs::read_dir(dest) else { return };
-    for y in years.flatten() {
-        let year_name = y.file_name().to_string_lossy().into_owned();
-        if year_name.len() != 4 || !year_name.chars().all(|c| c.is_ascii_digit()) {
+    // Le reste de la bibliothèque : seuls les fichiers qui suivent la
+    // structure de dossiers CHOISIE sont adoptés — un dossier en vrac posé
+    // dans la destination reste classable.
+    let review_dir = dest.join(REVIEW_DIR);
+    let walker = walkdir::WalkDir::new(dest)
+        .min_depth(1)
+        .into_iter()
+        .filter_entry(|e| {
+            !e.file_name().to_string_lossy().starts_with('.') && e.path() != review_dir
+        });
+    for f in walker.flatten() {
+        if !f.file_type().is_file() {
             continue;
         }
-        if !y.path().is_dir() {
+        let ext = ext_of(f.path());
+        if !is_media(&ext) {
             continue;
         }
-        for month in MONTHS_FR {
-            let month_dir = y.path().join(month);
-            let Ok(files) = fs::read_dir(&month_dir) else {
-                continue;
-            };
-            for f in files.flatten() {
-                let name = f.file_name().to_string_lossy().into_owned();
-                if name.starts_with('.') || !f.path().is_file() {
-                    continue;
-                }
-                let ext = ext_of(&f.path());
-                if !is_media(&ext) {
-                    continue;
-                }
-                let rel = format!("{year_name}/{month}/{name}");
-                if index.contains_key(&rel) {
-                    continue;
-                }
-                let Ok(md) = f.metadata() else { continue };
-                let (ts, _) = timestamp_for(&f.path(), &ext, &md);
-                let Ok(hash) = hash_key(&f.path(), md.len()) else {
-                    continue;
-                };
-                index.insert(
-                    rel,
-                    Rec {
-                        ts,
-                        size: md.len(),
-                        hash,
-                        original: name,
-                    },
-                );
-            }
+        let Ok(rel_path) = f.path().strip_prefix(dest) else {
+            continue;
+        };
+        if !suit_structure(rel_path, fmt) {
+            continue;
         }
+        let rel = rel_path.to_string_lossy().replace('\\', "/");
+        if index.contains_key(&rel) {
+            continue;
+        }
+        let Ok(md) = f.metadata() else { continue };
+        let (ts, _) = timestamp_for(f.path(), &ext, &md);
+        let Ok(hash) = hash_key(f.path(), md.len()) else {
+            continue;
+        };
+        let original = f.file_name().to_string_lossy().into_owned();
+        index.insert(
+            rel,
+            Rec {
+                ts,
+                size: md.len(),
+                hash,
+                original,
+            },
+        );
     }
 }
 
@@ -566,6 +626,13 @@ pub fn organize<F: Fn(Progress) + Sync>(
             src_files.push(p);
         }
     }
+    // 2. Index existant + adoption des fichiers non indexés — chargé AVANT le
+    // filtre : un fichier déjà géré, quelle que soit l'arborescence choisie,
+    // est connu de l'index.
+    let mut index = load_index(&dest);
+    index.retain(|rel, _| dest.join(rel).exists());
+    adopt_orphans(&dest, &mut index, fmt);
+
     let dest_canon = dest.canonicalize().unwrap_or_else(|_| dest.clone());
     let mut seen = HashSet::new();
     let candidates: Vec<PathBuf> = src_files
@@ -573,18 +640,14 @@ pub fn organize<F: Fn(Progress) + Sync>(
         .filter(|f| {
             let abs = f.canonicalize().unwrap_or_else(|_| f.clone());
             if let Ok(rel) = abs.strip_prefix(&dest_canon) {
-                if is_managed_rel(rel) {
+                let rel_str = rel.to_string_lossy().replace('\\', "/");
+                if index.contains_key(&rel_str) || suit_structure(rel, fmt) || is_managed_rel(rel) {
                     return false;
                 }
             }
             seen.insert(abs)
         })
         .collect();
-
-    // 2. Index existant + adoption des fichiers non indexés
-    let mut index = load_index(&dest);
-    index.retain(|rel, _| dest.join(rel).exists());
-    adopt_orphans(&dest, &mut index);
 
     // 3. Dates + empreintes des nouveaux fichiers (en parallèle)
     let done = AtomicUsize::new(0);
@@ -702,13 +765,20 @@ pub fn organize<F: Fn(Progress) + Sync>(
     }
     let mut renames: Vec<RenamePlan> = Vec::new();
     let mut copies: Vec<CopyPlan> = Vec::new();
+    let mut pris: HashSet<String> = HashSet::new();
     for (_k, mut items) in by_day {
         items.sort_by(|a, b| item_key(a).cmp(&item_key(b)));
         for (i, item) in items.into_iter().enumerate() {
             let n = i + 1;
             match item {
                 Item::Existing { rel, rec, ext } => {
-                    let to = target_rel(&rec.ts, n, &ext, fmt);
+                    let mut essai = n;
+                    let mut to = target_rel(&rec.ts, essai, &ext, fmt, false);
+                    while pris.contains(&to) {
+                        essai += 1;
+                        to = target_rel(&rec.ts, essai, &ext, fmt, true);
+                    }
+                    pris.insert(to.clone());
                     if rel != to {
                         renames.push(RenamePlan {
                             from: rel,
@@ -718,7 +788,13 @@ pub fn organize<F: Fn(Progress) + Sync>(
                     final_index.insert(to, rec);
                 }
                 Item::New(e) => {
-                    let to = target_rel(&e.ts, n, &e.ext, fmt);
+                    let mut essai = n;
+                    let mut to = target_rel(&e.ts, essai, &e.ext, fmt, false);
+                    while pris.contains(&to) {
+                        essai += 1;
+                        to = target_rel(&e.ts, essai, &e.ext, fmt, true);
+                    }
+                    pris.insert(to.clone());
                     let original = e
                         .src
                         .file_name()

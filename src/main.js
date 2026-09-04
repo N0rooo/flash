@@ -139,14 +139,18 @@ getCurrentWebview().onDragDropEvent(event => {
 
 showDest()
 
-// ----------------------------------------------------------- onboarding
+// ------------------------------------------- onboarding et réglages
 const voile = document.getElementById('voile')
-const etapes = [document.getElementById('etape0'), document.getElementById('etape1')]
-const points = [document.getElementById('pt0'), document.getElementById('pt1')]
+const voileReglages = document.getElementById('voileReglages')
+const etapes = [0, 1, 2].map(i => document.getElementById('etape' + i))
+const points = [0, 1, 2].map(i => document.getElementById('pt' + i))
 const onbRetour = document.getElementById('onbRetour')
 const onbSuivant = document.getElementById('onbSuivant')
 const onbPasser = document.getElementById('onbPasser')
 const destPathOnb = document.getElementById('destPathOnb')
+const panneauFormat = document.getElementById('panneauFormat')
+const hoteOnb = document.getElementById('hoteFormatOnb')
+const hoteReglages = document.getElementById('hoteFormatReglages')
 let etape = 0
 
 function montrerEtape(i) {
@@ -156,6 +160,7 @@ function montrerEtape(i) {
   onbRetour.hidden = i === 0
   onbPasser.hidden = i !== 0
   onbSuivant.textContent = i === etapes.length - 1 ? "C'est parti" : 'Continuer'
+  if (i === 2) hoteOnb.appendChild(panneauFormat)
   if (destPathOnb && dest) {
     destPathOnb.textContent = dest
     destPathOnb.classList.remove('empty')
@@ -163,12 +168,14 @@ function montrerEtape(i) {
 }
 
 function ouvrirOnboarding() {
+  voileReglages.hidden = true
   voile.hidden = false
   montrerEtape(0)
 }
 
 function fermerOnboarding() {
   voile.hidden = true
+  hoteReglages.appendChild(panneauFormat)
   localStorage.setItem('flashOnboarde', 'oui')
 }
 
@@ -178,7 +185,14 @@ onbSuivant.addEventListener('click', () => {
 })
 onbRetour.addEventListener('click', () => montrerEtape(Math.max(0, etape - 1)))
 onbPasser.addEventListener('click', fermerOnboarding)
-document.getElementById('revoir').addEventListener('click', ouvrirOnboarding)
+document.getElementById('ouvrirReglages').addEventListener('click', () => {
+  hoteReglages.appendChild(panneauFormat)
+  voileReglages.hidden = false
+})
+document.getElementById('fermerReglages').addEventListener('click', () => {
+  voileReglages.hidden = true
+})
+document.getElementById('revoirOnb').addEventListener('click', ouvrirOnboarding)
 document.getElementById('chooseDestOnb').addEventListener('click', async () => {
   const picked = await invoke('choose_dest')
   if (picked) {
@@ -192,10 +206,10 @@ document.getElementById('chooseDestOnb').addEventListener('click', async () => {
 
 if (!localStorage.getItem('flashOnboarde')) ouvrirOnboarding()
 
-
 // -------------------------------------------------------- format des noms
 const LIBELLES = { motcle: 'Mot-clé', jour: 'Jour', mois: 'Mois', annee: 'Année', heure: 'Heure', numero: 'N°' }
-const chipsEl = document.getElementById('chips')
+const chipsDossiersEl = document.getElementById('chipsDossiers')
+const chipsNomEl = document.getElementById('chipsNom')
 const motcleEl = document.getElementById('motcle')
 const apercuEl = document.getElementById('apercu')
 
@@ -203,8 +217,24 @@ let fmt
 try {
   fmt = JSON.parse(localStorage.getItem('flashFormat'))
 } catch { /* format illisible : on repart du défaut */ }
-if (!fmt || !Array.isArray(fmt.ordre)) {
+if (!fmt || !Array.isArray(fmt.ordre)) fmt = null
+if (fmt && !Array.isArray(fmt.dossiers)) {
+  // migration depuis la première version (nom seul)
+  fmt.dossiers = [
+    { id: 'annee', actif: true },
+    { id: 'mois', actif: true },
+    { id: 'jour', actif: false },
+    { id: 'motcle', actif: false },
+  ]
+}
+if (!fmt) {
   fmt = {
+    dossiers: [
+      { id: 'annee', actif: true },
+      { id: 'mois', actif: true },
+      { id: 'jour', actif: false },
+      { id: 'motcle', actif: false },
+    ],
     ordre: [
       { id: 'motcle', actif: false },
       { id: 'jour', actif: true },
@@ -224,56 +254,96 @@ function sauverFormat() {
 function formatCourant() {
   return {
     elements: fmt.ordre.filter(c => c.actif).map(c => c.id),
+    dossiers: fmt.dossiers.filter(c => c.actif).map(c => c.id),
     motcle: fmt.motcle || '',
   }
 }
 
 function apercu() {
-  const exemple = { motcle: (fmt.motcle || 'vacances').trim() || 'vacances', jour: '10', mois: 'avril', annee: '2026', heure: '14h32', numero: '2' }
-  let parts = fmt.ordre.filter(c => c.actif).map(c => exemple[c.id])
-  if (!fmt.ordre.find(c => c.id === 'numero' && c.actif)) parts.push(exemple.numero)
-  if (parts.length === 0) parts = ['10', 'avril', '2']
-  apercuEl.textContent = '2026/avril/' + parts.join(' ') + '.jpg'
+  const exemple = {
+    motcle: (fmt.motcle || 'vacances').trim() || 'vacances',
+    jour: '10', mois: 'avril', annee: '2026', heure: '14h32', numero: '2',
+  }
+  const chemin = fmt.dossiers.filter(c => c.actif).map(c => exemple[c.id])
+  let nom = fmt.ordre.filter(c => c.actif).map(c => exemple[c.id])
+  if (nom.length === 0) nom = ['10', 'avril']
+  apercuEl.textContent = (chemin.length ? chemin.join('/') + '/' : '') + nom.join(' ') + '.jpg'
 }
 
+// Glisser maison : dragDropEnabled de Tauri intercepte le drag HTML5,
+// on suit donc la souris nous-mêmes.
 let glisse = null
+let vientDeGlisser = false
 
-function dessinerChips() {
-  chipsEl.innerHTML = ''
-  fmt.ordre.forEach((c, i) => {
+function toutDessiner() {
+  dessinerBarre(chipsDossiersEl, fmt.dossiers)
+  dessinerBarre(chipsNomEl, fmt.ordre)
+  motcleEl.hidden = !(
+    fmt.dossiers.some(c => c.id === 'motcle' && c.actif) ||
+    fmt.ordre.some(c => c.id === 'motcle' && c.actif)
+  )
+  apercu()
+}
+
+function dessinerBarre(conteneur, liste) {
+  conteneur.innerHTML = ''
+  liste.forEach((c, i) => {
     const el = document.createElement('span')
-    el.className = 'chip' + (c.actif ? '' : ' coupe') + (c.id === 'numero' ? ' fixe' : '')
+    el.className = 'chip' + (c.actif ? '' : ' coupe')
     el.textContent = LIBELLES[c.id]
-    el.draggable = true
-    if (c.id === 'numero') el.title = 'Toujours présent : deux photos du même jour doivent avoir des noms différents'
     el.addEventListener('click', () => {
-      if (c.id === 'numero') return
+      if (vientDeGlisser) return
       c.actif = !c.actif
-      if (c.id === 'motcle') motcleEl.hidden = !c.actif
-      sauverFormat(); dessinerChips(); apercu()
+      sauverFormat()
+      toutDessiner()
     })
-    el.addEventListener('dragstart', () => { glisse = i })
-    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('survole') })
-    el.addEventListener('dragleave', () => el.classList.remove('survole'))
-    el.addEventListener('drop', e => {
+    el.addEventListener('mousedown', e => {
+      if (e.button !== 0) return
       e.preventDefault()
-      el.classList.remove('survole')
-      if (glisse === null || glisse === i) return
-      const [pris] = fmt.ordre.splice(glisse, 1)
-      fmt.ordre.splice(i, 0, pris)
-      glisse = null
-      sauverFormat(); dessinerChips(); apercu()
+      glisse = { liste, i, el, conteneur, x: e.clientX, y: e.clientY, bouge: false }
     })
-    chipsEl.appendChild(el)
+    conteneur.appendChild(el)
   })
 }
 
-motcleEl.value = fmt.motcle || ''
-motcleEl.hidden = !fmt.ordre.find(c => c.id === 'motcle' && c.actif)
-motcleEl.addEventListener('input', () => {
-  fmt.motcle = motcleEl.value
-  sauverFormat(); apercu()
+document.addEventListener('mousemove', e => {
+  if (!glisse) return
+  if (!glisse.bouge && Math.hypot(e.clientX - glisse.x, e.clientY - glisse.y) > 5) {
+    glisse.bouge = true
+    glisse.el.classList.add('trainee')
+  }
+  if (!glisse.bouge) return
+  for (const chip of glisse.conteneur.children) chip.classList.remove('survole')
+  const sous = document.elementFromPoint(e.clientX, e.clientY)
+  const cible = sous && sous.closest('.chip')
+  if (cible && cible !== glisse.el && cible.parentElement === glisse.conteneur) {
+    cible.classList.add('survole')
+  }
 })
 
-dessinerChips()
-apercu()
+document.addEventListener('mouseup', e => {
+  if (!glisse) return
+  const g = glisse
+  glisse = null
+  if (!g.bouge) return
+  vientDeGlisser = true
+  setTimeout(() => { vientDeGlisser = false }, 0)
+  const sous = document.elementFromPoint(e.clientX, e.clientY)
+  const cible = sous && sous.closest('.chip')
+  if (cible && cible !== g.el && cible.parentElement === g.conteneur) {
+    const j = [...g.conteneur.children].indexOf(cible)
+    const [pris] = g.liste.splice(g.i, 1)
+    g.liste.splice(j, 0, pris)
+    sauverFormat()
+  }
+  toutDessiner()
+})
+
+motcleEl.value = fmt.motcle || ''
+motcleEl.addEventListener('input', () => {
+  fmt.motcle = motcleEl.value
+  sauverFormat()
+  apercu()
+})
+
+toutDessiner()

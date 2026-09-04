@@ -14,7 +14,7 @@
         <h1>Flash</h1>
         <p class="tagline">le chien qui rapporte tes photos dans l'ordre</p>
       </div>
-      <button id="revoir" class="ghost coin">Présentation</button>
+      <button id="ouvrirReglages" class="ghost coin">Réglages</button>
     </header>
     <p class="subtitle">Photos et vidéos classées en <code>Année / mois / JJ mois N</code>, dans l'ordre de prise de vue.</p>
 
@@ -30,18 +30,6 @@
       <input type="checkbox" id="moveToggle">
       <span>Déplacer les fichiers au lieu de les copier</span>
     </label>
-
-    <section class="format-row">
-      <div class="format-tete">
-        <span class="dest-label">Format des noms</span>
-        <span id="apercu" class="apercu"></span>
-      </div>
-      <div id="chips"></div>
-      <input id="motcle" type="text" placeholder="Ton mot-clé… (ex. vacances)" hidden>
-      <p class="format-note">Clique pour activer ou couper, glisse pour changer l'ordre. Le N° reste
-      toujours là (deux photos du même jour doivent avoir des noms différents). Les dossiers restent
-      Année/mois. Le nouveau format s'applique à toute la bibliothèque au prochain dépôt.</p>
-    </section>
 
     <div id="dropzone">
       <svg class="dz-eclair" viewBox="0 0 24 24" aria-hidden="true">
@@ -90,12 +78,44 @@
         <p class="note-onb">Astuce : coche « Déplacer les fichiers » sur l'écran principal si tu
         veux vider les dossiers d'origine au lieu de copier.</p>
       </div>
+      <div id="etape2" hidden>
+        <h2>À ta façon</h2>
+        <p>Choisis la forme des dossiers et des noms de fichiers. Tu retrouveras tout ça
+        à tout moment dans les Réglages.</p>
+        <div id="hoteFormatOnb"></div>
+      </div>
       <div class="actions">
         <button id="onbRetour" class="ghost" hidden>Retour</button>
         <button id="onbSuivant">Continuer</button>
         <button id="onbPasser" class="ghost">Passer</button>
       </div>
-      <div class="points"><span id="pt0" class="actif"></span><span id="pt1"></span></div>
+      <div class="points"><span id="pt0" class="actif"></span><span id="pt1"></span><span id="pt2"></span></div>
+    </div>
+  </div>
+  <div id="voileReglages" hidden>
+    <div class="modale">
+      <h2>Réglages</h2>
+      <div id="hoteFormatReglages">
+        <div id="panneauFormat">
+          <div class="format-tete"><span class="dest-label">Dossiers parents</span></div>
+          <div id="chipsDossiers" class="chips"></div>
+          <div class="format-tete"><span class="dest-label">Nom du fichier</span></div>
+          <div id="chipsNom" class="chips"></div>
+          <input id="motcle" type="text" placeholder="Ton mot-clé… (ex. vacances)" hidden>
+          <div class="format-tete apercu-ligne">
+            <span class="dest-label">Aperçu</span>
+            <span id="apercu" class="apercu"></span>
+          </div>
+          <p class="format-note">Clique sur une pastille pour l'activer ou la couper,
+          attrape-la pour changer l'ordre. Si deux fichiers du même jour obtiennent le même
+          nom, Flash ajoute le numéro tout seul. Le nouveau format s'applique à toute la
+          bibliothèque au prochain dépôt.</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="fermerReglages">Fermer</button>
+        <button id="revoirOnb" class="ghost">Revoir la présentation</button>
+      </div>
     </div>
   </div>
   <script src="main.js"></script>
