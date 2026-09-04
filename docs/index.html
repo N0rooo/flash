@@ -112,7 +112,32 @@
       border: 1.5px dashed var(--eclair); border-radius: 999px; padding: 6px 16px;
     }
     /* la bande de pellicule : les cartes sont des photogrammes, ça défile */
-    .film { margin: 26px 0 10px; overflow-x: auto; border-radius: 16px; }
+    .bobine { position: relative; margin: 26px 0 10px; }
+    .film {
+      overflow-x: auto; border-radius: 16px; cursor: grab;
+      scroll-snap-type: x proximity; scrollbar-width: none;
+    }
+    .film::-webkit-scrollbar { display: none; }
+    .film.attrape { cursor: grabbing; scroll-snap-type: none; }
+    .fleche {
+      position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+      width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
+      background: var(--eclair); color: #1c1600; font-size: 28px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; line-height: 1;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+      transition: background 0.12s ease, transform 0.12s ease;
+    }
+    .fleche:hover { background: var(--eclair-vif); transform: translateY(-50%) scale(1.06); }
+    .fleche.gauche { left: -14px; }
+    .fleche.droite { right: -14px; }
+    .fleche[hidden] { display: none; }
+    .voile-bord {
+      position: absolute; top: 0; bottom: 0; width: 90px; pointer-events: none;
+      z-index: 2; transition: opacity 0.2s ease;
+    }
+    .voile-bord.droite { right: 0; border-radius: 0 16px 16px 0; background: linear-gradient(90deg, rgba(11, 12, 16, 0), rgba(11, 12, 16, 0.92)); }
+    .voile-bord.gauche { left: 0; border-radius: 16px 0 0 16px; background: linear-gradient(-90deg, rgba(11, 12, 16, 0), rgba(11, 12, 16, 0.92)); }
+    .voile-bord.cache { opacity: 0; }
     .cadres {
       display: flex; gap: 14px; min-width: 100%; width: max-content;
       position: relative; background: #0b0c10; border-radius: 16px;
@@ -127,7 +152,7 @@
     .cadres::before { top: 14px; }
     .cadres::after { bottom: 14px; }
     .cadre {
-      width: 300px; flex: none;
+      width: 300px; flex: none; scroll-snap-align: start;
       background: var(--panneau); border: 1px solid var(--trait); border-radius: 6px;
       padding: 20px 18px; transition: border-color 0.16s ease;
     }
@@ -220,7 +245,12 @@
     <div class="punch">Dix ans de pagaille,<br><span class="jaune">un seul album</span></div>
 
     <div class="tete-section" id="fonctions"><span class="surtitre">Ce qu'il fait</span></div>
-    <section class="film"><div class="cadres">
+    <div class="bobine">
+      <button class="fleche gauche" aria-label="Photogrammes précédents" hidden>&#8249;</button>
+      <button class="fleche droite" aria-label="Photogrammes suivants">&#8250;</button>
+      <div class="voile-bord gauche cache"></div>
+      <div class="voile-bord droite"></div>
+      <section class="film"><div class="cadres">
       <div class="cadre">
         <h3>La vraie date, pas la fausse</h3>
         <p>EXIF pour les photos, métadonnées pour les vidéos, recoupées avec les dates du
@@ -253,7 +283,8 @@
         toi qui le décides, avec une case à cocher.</p>
       </div>
     </div></section>
-    <p class="indice-defile">Fais défiler la pellicule pour voir la suite</p>
+    </div>
+    <p class="indice-defile">Fais glisser la pellicule, ou clique sur les flèches</p>
 
     <section class="etapes">
       <div class="tete-section"><span class="surtitre">Mode d'emploi</span></div>
@@ -281,5 +312,38 @@
       <a href="https://github.com/N0rooo/flash">Code source</a>
     </footer>
   </div>
+<script>
+  const film = document.querySelector('.film')
+  const gauche = document.querySelector('.fleche.gauche')
+  const droite = document.querySelector('.fleche.droite')
+  const voileG = document.querySelector('.voile-bord.gauche')
+  const voileD = document.querySelector('.voile-bord.droite')
+  function majBobine() {
+    const max = film.scrollWidth - film.clientWidth
+    const x = film.scrollLeft
+    gauche.hidden = x < 10
+    droite.hidden = x > max - 10
+    voileG.classList.toggle('cache', x < 10)
+    voileD.classList.toggle('cache', x > max - 10)
+  }
+  film.addEventListener('scroll', majBobine)
+  window.addEventListener('resize', majBobine)
+  gauche.addEventListener('click', () => film.scrollBy({ left: -330, behavior: 'smooth' }))
+  droite.addEventListener('click', () => film.scrollBy({ left: 330, behavior: 'smooth' }))
+  let prise = null
+  film.addEventListener('mousedown', e => {
+    prise = { x: e.clientX, depart: film.scrollLeft }
+    film.classList.add('attrape')
+    e.preventDefault()
+  })
+  window.addEventListener('mousemove', e => {
+    if (prise) film.scrollLeft = prise.depart - (e.clientX - prise.x)
+  })
+  window.addEventListener('mouseup', () => {
+    prise = null
+    film.classList.remove('attrape')
+  })
+  majBobine()
+</script>
 </body>
 </html>
