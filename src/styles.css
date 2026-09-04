@@ -111,6 +111,8 @@ header .coin { margin-left: auto; }
   position: fixed; inset: 0; background: rgba(8, 9, 12, 0.72);
   display: flex; align-items: center; justify-content: center; z-index: 50;
 }
+/* display:flex écraserait l'attribut hidden : on le rétablit explicitement */
+#voile[hidden] { display: none !important; }
 #voile .modale {
   background: var(--panneau); border: 1px solid var(--trait); border-radius: 20px;
   padding: 30px 32px; width: min(520px, calc(100vw - 48px));
