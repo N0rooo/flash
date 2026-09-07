@@ -1,11 +1,11 @@
 {
   "name": "flash",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Flash, le chien qui rapporte tes photos dans l'ordre",
   "scripts": {
     "dev": "tauri dev",
-    "build": "tauri build",
+    "build": "TAURI_SIGNING_PRIVATE_KEY=\"$(cat src-tauri/updater.local.key)\" TAURI_SIGNING_PRIVATE_KEY_PASSWORD=\"\" tauri build",
     "tauri": "tauri"
   },
   "devDependencies": {

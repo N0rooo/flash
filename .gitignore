@@ -2,3 +2,5 @@ node_modules/
 src-tauri/target/
 src-tauri/gen/
 .DS_Store
+# Clé privée de signature des mises à jour : IRREMPLAÇABLE, jamais commitée
+src-tauri/updater.local.key
