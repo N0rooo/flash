@@ -202,6 +202,46 @@
     .famille a { color: var(--eclair); font-weight: 700; text-decoration: none; }
     footer { text-align: center; color: var(--sourdine); font-size: 13.5px; padding: 40px 0 30px; }
     footer a { color: var(--eclair); text-decoration: none; }
+
+    /* ------------------------ animations : entrées, sorties, parallaxe */
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal {
+        opacity: 0;
+        transform: translate(var(--tx, 0px), var(--ty, 26px)) rotate(var(--rot, 0deg)) scale(var(--ech, 1));
+        filter: brightness(0.35) saturate(0.35);
+        transition: opacity 0.6s ease var(--att, 0ms),
+                    transform 0.65s cubic-bezier(0.2, 0.7, 0.3, 1) var(--att, 0ms),
+                    filter 0.8s ease var(--att, 0ms);
+      }
+      .reveal.visible {
+        opacity: 1; filter: none;
+        transform: translate(0, 0) rotate(var(--rot, 0deg)) scale(1);
+      }
+      @keyframes apparait { from { opacity: 0; transform: translateY(20px); } }
+      @keyframes pointe { from { opacity: 0; transform: scale(0.7); } }
+      .heros img.mascotte { animation: pointe 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
+      .heros h1 { animation: apparait 0.65s cubic-bezier(0.2, 0.7, 0.3, 1) both 0.1s; }
+      .heros .sous { animation: apparait 0.65s cubic-bezier(0.2, 0.7, 0.3, 1) both 0.2s; }
+      .heros .cta { animation: apparait 0.65s cubic-bezier(0.2, 0.7, 0.3, 1) both 0.3s; }
+      .heros .precision { animation: apparait 0.65s ease both 0.38s; }
+      @keyframes arriveDemo { from { opacity: 0; transform: translateY(40px) rotate(-0.6deg); } }
+      .heros .demo { animation: arriveDemo 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) both 0.35s; }
+      /* le néon s'allume en grésillant quand la punchline apparaît */
+      @keyframes gresille {
+        0% { opacity: 0.1; text-shadow: none; }
+        30% { opacity: 1; }
+        38% { opacity: 0.25; }
+        46% { opacity: 1; }
+        54% { opacity: 0.5; text-shadow: none; }
+        100% { opacity: 1; }
+      }
+      .punch.visible .jaune { animation: gresille 1.1s ease both; }
+    }
+    /* rotations des tirages, reprises par l'animation d'entrée */
+    .pas .un:nth-child(1) { --rot: -1.6deg; --ech: 0.94; }
+    .pas .un:nth-child(2) { --rot: 1.1deg; --ech: 0.94; }
+    .pas .un:nth-child(3) { --rot: -0.8deg; --ech: 0.94; }
+    .cadre { --ty: 0px; --ech: 0.92; }
   </style>
 </head>
 <body>
@@ -348,5 +388,41 @@
   })
   majBobine()
 </script>
+
+  <script>
+    (function () {
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+      const cibles = document.querySelectorAll(
+        '.cadre, .pas .un, .punch, section.privee, .tete-section, .etapes h2, .famille, .indice-defile'
+      )
+      cibles.forEach(el => {
+        el.classList.add('reveal')
+        const freres = [...el.parentElement.children].filter(f => f.classList.contains('reveal'))
+        el.style.setProperty('--att', Math.min(freres.indexOf(el), 7) * 80 + 'ms')
+      })
+      const io = new IntersectionObserver(
+        entrees => entrees.forEach(e => e.target.classList.toggle('visible', e.isIntersecting)),
+        { threshold: 0.12, rootMargin: '0px 0px -30px 0px' }
+      )
+      cibles.forEach(el => io.observe(el))
+
+      const pellicule = document.querySelector('.pellicule')
+      const parallaxe = [
+        ['.heros img.mascotte', 0.07, ''],
+        ['.heros .demo', -0.045, 'rotate(-0.6deg)'],
+      ].map(([sel, v, rot]) => [document.querySelector(sel), v, rot]).filter(([el]) => el)
+      let demande = null
+      function bouge() {
+        demande = null
+        const y = window.scrollY
+        for (const [el, v, rot] of parallaxe) {
+          el.style.transform = 'translateY(' + (y * v).toFixed(1) + 'px) ' + rot
+        }
+        // la pellicule avance avec le défilement
+        if (pellicule) pellicule.style.backgroundPositionX = (-y * 0.35).toFixed(1) + 'px'
+      }
+      addEventListener('scroll', () => { if (!demande) demande = requestAnimationFrame(bouge) }, { passive: true })
+    })()
+  </script>
 </body>
 </html>
