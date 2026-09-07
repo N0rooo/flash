@@ -1,6 +1,6 @@
 [package]
 name = "flash"
-version = "0.1.0"
+version = "0.3.0"
 description = "Flash, le chien qui rapporte tes photos dans l'ordre"
 authors = ["Thomas Aubert"]
 edition = "2021"
