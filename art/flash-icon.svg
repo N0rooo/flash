@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
     <linearGradient id="nuit" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#262a34"/>
-      <stop offset="1" stop-color="#15161c"/>
+      <stop offset="0" stop-color="#3b3226"/>
+      <stop offset="1" stop-color="#221c14"/>
     </linearGradient>
-    <radialGradient id="halo" cx="0.5" cy="0.42" r="0.62">
-      <stop offset="0" stop-color="#f7c948" stop-opacity="0.30"/>
+    <radialGradient id="halo" cx="0.5" cy="0.42" r="0.68">
+      <stop offset="0" stop-color="#f7c948" stop-opacity="0.42"/>
       <stop offset="1" stop-color="#f7c948" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="poil" cx="0.42" cy="0.32" r="0.9">
@@ -13,8 +13,8 @@
       <stop offset="1" stop-color="#e7d2ab"/>
     </radialGradient>
     <linearGradient id="oreille" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4a3c2c"/>
-      <stop offset="1" stop-color="#6b563a"/>
+      <stop offset="0" stop-color="#5a4a36"/>
+      <stop offset="1" stop-color="#7a6248"/>
     </linearGradient>
     <clipPath id="cadre">
       <rect x="20" y="20" width="984" height="984" rx="224"/>
@@ -26,34 +26,44 @@
   <g clip-path="url(#cadre)">
     <rect x="20" y="20" width="984" height="984" fill="url(#halo)"/>
 
-    <!-- oreilles dressées, chien aux aguets -->
-    <path d="M 290 470 C 240 330 250 190 300 90 C 400 150 470 260 490 380 C 420 400 340 435 290 470 Z" fill="url(#oreille)"/>
-    <path d="M 734 470 C 784 330 774 190 724 90 C 624 150 554 260 534 380 C 604 400 684 435 734 470 Z" fill="url(#oreille)"/>
-    <path d="M 320 420 C 292 320 296 230 326 156 C 392 208 436 288 452 372 C 404 386 354 402 320 420 Z" fill="#f7c948" opacity="0.9"/>
+    <!-- oreilles plus courtes et rondes, tips tombants : chiot plutôt que chien de garde -->
+    <path d="M 292 480 C 246 370 254 250 316 168 C 330 158 350 158 366 176 C 428 240 466 310 486 390 C 420 408 344 442 292 480 Z" fill="url(#oreille)"/>
+    <path d="M 732 480 C 778 370 770 250 708 168 C 694 158 674 158 658 176 C 596 240 558 310 538 390 C 604 408 680 442 732 480 Z" fill="url(#oreille)"/>
+    <path d="M 328 424 C 302 340 310 262 346 200 C 398 254 432 314 450 378 C 406 392 362 406 328 424 Z" fill="#f7c948" opacity="0.9"/>
 
     <!-- tête ronde et grande -->
     <circle cx="512" cy="590" r="340" fill="url(#poil)"/>
 
-    <!-- tache éclair sur l'œil gauche -->
-    <path d="M 470 330 L 330 520 L 415 520 L 360 690 L 520 480 L 435 480 Z" fill="#f7c948"/>
+    <!-- tache éclair adoucie sur l'œil gauche -->
+    <path d="M 470 336 L 336 518 L 418 518 L 366 682 L 518 482 L 436 482 Z"
+      fill="#f7c948" stroke="#f7c948" stroke-width="30" stroke-linejoin="round"/>
 
     <!-- museau -->
-    <ellipse cx="512" cy="740" rx="210" ry="150" fill="#fdf7e8"/>
+    <ellipse cx="512" cy="742" rx="205" ry="146" fill="#fdf7e8"/>
 
-    <!-- truffe -->
-    <path d="M 512 715 C 482 709 458 691 458 667 C 458 641 482 628 512 628 C 542 628 566 641 566 667 C 566 691 542 709 512 715 Z" fill="#2b2620"/>
+    <!-- joues roses -->
+    <ellipse cx="292" cy="672" rx="58" ry="38" fill="#eba98c" opacity="0.55"/>
+    <ellipse cx="732" cy="672" rx="58" ry="38" fill="#eba98c" opacity="0.55"/>
 
-    <!-- grand sourire et langue : chien content d'avoir rapporté -->
-    <path d="M 512 718 C 512 762 478 788 440 786" fill="none" stroke="#2b2620" stroke-width="20" stroke-linecap="round"/>
-    <path d="M 512 718 C 512 762 546 788 584 786" fill="none" stroke="#2b2620" stroke-width="20" stroke-linecap="round"/>
-    <path d="M 512 770 C 490 815 500 852 528 862 C 558 852 566 812 548 768 Z" fill="#e2574d"/>
+    <!-- petite truffe ronde -->
+    <path d="M 512 700 C 486 695 466 680 466 660 C 466 638 486 626 512 626 C 538 626 558 638 558 660 C 558 680 538 695 512 700 Z" fill="#2b2620"/>
+    <ellipse cx="496" cy="646" rx="12" ry="8" fill="#54463a"/>
 
-    <!-- œil dans la tache, œil droit pétillant -->
-    <circle cx="415" cy="505" r="34" fill="#2b2620"/>
-    <circle cx="427" cy="493" r="11" fill="#fdf7e8"/>
-    <circle cx="640" cy="505" r="34" fill="#2b2620"/>
-    <circle cx="652" cy="493" r="11" fill="#fdf7e8"/>
+    <!-- sourire tout doux et petite langue -->
+    <path d="M 512 704 C 512 742 484 762 452 760" fill="none" stroke="#2b2620" stroke-width="18" stroke-linecap="round"/>
+    <path d="M 512 704 C 512 742 540 762 572 760" fill="none" stroke="#2b2620" stroke-width="18" stroke-linecap="round"/>
+    <path d="M 512 752 C 496 786 504 814 526 822 C 550 814 556 784 542 750 Z" fill="#e8756a"/>
 
-    <rect x="20" y="20" width="984" height="984" fill="none"/>
+    <!-- grands yeux tendres, double étincelle -->
+    <circle cx="418" cy="505" r="44" fill="#2b2620"/>
+    <circle cx="432" cy="490" r="15" fill="#fdf7e8"/>
+    <circle cx="406" cy="522" r="7" fill="#fdf7e8" opacity="0.85"/>
+    <circle cx="636" cy="505" r="44" fill="#2b2620"/>
+    <circle cx="650" cy="490" r="15" fill="#fdf7e8"/>
+    <circle cx="624" cy="522" r="7" fill="#fdf7e8" opacity="0.85"/>
+
+    <!-- sourcils ronds au-dessus : l'air attendri -->
+    <path d="M 384 424 Q 418 406 452 424" fill="none" stroke="#c9b491" stroke-width="16" stroke-linecap="round"/>
+    <path d="M 602 424 Q 636 406 670 424" fill="none" stroke="#c9b491" stroke-width="16" stroke-linecap="round"/>
   </g>
 </svg>
